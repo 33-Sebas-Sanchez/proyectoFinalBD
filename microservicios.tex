@@ -2,239 +2,212 @@
 % ============================================================================
 % Arquitectura de microservicios por esquema
 % Proyecto Final de Bases de Datos - Inventario, Compras y Ventas (PostgreSQL)
+% Disposicion: seis tarjetas en dos filas de tres + banda de flujos.
 % ============================================================================
-\documentclass[tikz, border=14pt]{standalone}
+\documentclass[tikz, border=0pt]{standalone}
 
 \usepackage{fontspec}
 \setmainfont{STIX Two Text}
 \setsansfont{Source Sans 3}[Scale=MatchLowercase]
 \setmonofont{JetBrains Mono}[Scale=MatchLowercase]
 
-\usetikzlibrary{arrows.meta, calc}
+\usetikzlibrary{arrows.meta}
 
 % ---------------------------------------------------------------- paleta
 \definecolor{negro}{HTML}{1F2933}
 \definecolor{gris}{HTML}{616E7C}
-\definecolor{grisClaro}{HTML}{9AA5B1}
-\definecolor{linea}{HTML}{D3DCE6}
-\definecolor{fondo}{HTML}{F4F6F8}
+\definecolor{grisClaro}{HTML}{7B8794}
+\definecolor{linea}{HTML}{D9E2EC}
+\definecolor{fondo}{HTML}{F7F8FA}
 
-\definecolor{cCat}{HTML}{2F6DB5}
-\definecolor{cCom}{HTML}{C96800}
-\definecolor{cInv}{HTML}{1E7A45}
-\definecolor{cVen}{HTML}{A82010}
-\definecolor{cIde}{HTML}{6030A0}
-\definecolor{cRep}{HTML}{2C3E50}
+\definecolor{cCat}{HTML}{2B6CB0}
+\definecolor{cCom}{HTML}{2C7A7B}
+\definecolor{cInv}{HTML}{2F855A}
+\definecolor{cVen}{HTML}{C53030}
+\definecolor{cIde}{HTML}{B7791F}
+\definecolor{cRep}{HTML}{A23B72}
+\definecolor{neutro}{HTML}{7B8794}
+\definecolor{acento2}{HTML}{486581}
 
-% ---------------------------------------------------------------- estilos
-\tikzset{
-  card/.style={
-    draw=linea, line width=0.6pt, fill=white,
-    rounded corners=2pt
-  },
-  band/.style={
-    draw=linea, line width=0.6pt, fill=fondo,
-    rounded corners=2pt
-  },
-  rail/.style={
-    draw=grisClaro, line width=0.6pt,
-    dash pattern=on 3pt off 2.4pt
-  },
-  flow/.style={
-    -{Stealth[length=4.2pt, width=3.2pt]},
-    draw=gris, line width=0.7pt
-  },
-  biflow/.style={
-    {Stealth[length=4.2pt, width=3.2pt]}-{Stealth[length=4.2pt, width=3.2pt]},
-    draw=gris, line width=0.7pt
-  },
-  ref/.style={
-    -{Stealth[length=3.4pt, width=2.6pt]},
-    draw=grisClaro, line width=0.55pt,
-    dash pattern=on 2.6pt off 2pt
-  },
-  rotulo/.style={
-    font=\sffamily\fontsize{6.4}{7.4}\selectfont,
-    text=gris
-  }
+% ---------------------------------------------------------------- utilidades
+% Separador de listas: el punto queda pegado a la palabra anterior y el
+% corte de linea ocurre despues, de modo que nunca empieza una linea con "·".
+\newcommand{\sep}{~\textperiodcentered{}\space}
+
+\newcommand{\punto}[1]{%
+  \tikz[baseline=-0.55ex]\fill[#1] (0,0) circle (1.55pt);}
+
+\newcommand{\flechita}{%
+  \tikz[baseline=-0.55ex]{%
+    \draw[-{Stealth[length=2.4pt, width=1.8pt]}, gris, line width=0.55pt]
+      (0,0) -- (0.32,0);}}
+
+\newcommand{\flechitaD}{%
+  \tikz[baseline=-0.55ex]{%
+    \draw[{Stealth[length=2.4pt, width=1.8pt]}%
+          -{Stealth[length=2.4pt, width=1.8pt]}, gris, line width=0.55pt]
+      (0,0) -- (0.32,0);}}
+
+% Tarjeta: cabecera, esquema, funcion y regla superior
+% \tarjeta{x}{y}{color}{numero}{titulo}{esquema}{conteo}{funcion}
+\newcommand{\tarjeta}[8]{%
+  \filldraw[fill=#3!12, draw=#3!70, line width=0.8pt, rounded corners=5pt]
+    (#1,#2) rectangle ++(8.7,-6.2);
+  \fill[#3] (#1+0.55,#2-0.55) circle (0.30);
+  \node[text=white, font=\sffamily\bfseries\fontsize{8.6}{9}\selectfont]
+    at (#1+0.55,#2-0.55) {#4};
+  \node[anchor=west, text=#3!80!black,
+        font=\sffamily\bfseries\fontsize{12}{14}\selectfont]
+    at (#1+1.05,#2-0.62) {#5};
+  \node[anchor=east, text=gris,
+        font=\sffamily\fontsize{7.2}{8.6}\selectfont]
+    at (#1+8.25,#2-0.64) {#7};
+  \node[anchor=west, text=gris,
+        font=\sffamily\fontsize{6.8}{8}\selectfont]
+    at (#1+0.55,#2-1.30) {ESQUEMA};
+  \node[anchor=west, text=#3!80!black,
+        font=\ttfamily\fontsize{8.6}{10}\selectfont]
+    at (#1+1.95,#2-1.30) {#6};
+  \node[anchor=north west, text width=7.60cm, align=left,
+        text=negro,
+        font=\sffamily\fontsize{7.8}{9.6}\selectfont,
+        execute at begin node={\raggedright}]
+    at (#1+0.55,#2-1.62) {#8};
+  \draw[#3!30, line width=0.5pt]
+    (#1+0.55,#2-2.48) -- (#1+8.15,#2-2.48);
 }
 
-% ---------------------------------------------------------------- macros
-% \servicio{y}{color}{titulo}{esquema}{tablas}{rol}
-\newcommand{\servicio}[6]{%
-  \fill[#2] (0,#1) rectangle (0.13,#1-1.70);
-  \draw[card] (0,#1) rectangle (12.80,#1-1.70);
-  \node[anchor=north west,
-        font=\sffamily\bfseries\fontsize{9.4}{11}\selectfont,
-        text=negro] at (0.30,#1-0.24) {#3};
-  \node[anchor=north east,
-        font=\ttfamily\fontsize{6.8}{8}\selectfont,
-        text=gris] at (12.62,#1-0.27) {esquema #4};
-  \node[anchor=north west,
-        font=\ttfamily\fontsize{6.2}{7.6}\selectfont,
+% Cuerpo: listado de tablas/vistas y rol propietario
+% \cuerpo{x}{y}{color}{seccion}{lista}{rotulo rol}{valor rol}
+\newcommand{\cuerpo}[7]{%
+  \node[anchor=west, text=gris,
+        font=\sffamily\bfseries\fontsize{6.9}{8.2}\selectfont]
+    at (#1+0.55,#2-2.74) {#4};
+  \node[anchor=north west, text width=7.60cm, align=left,
         text=negro,
-        text width=12.3cm, align=left] at (0.30,#1-0.78) {#5};
-  \node[anchor=south west,
-        font=\sffamily\fontsize{6.5}{7.6}\selectfont,
-        text=gris] at (0.30,#1-1.70+0.14) {#6};
+        font=\ttfamily\fontsize{7.7}{9.6}\selectfont,
+        execute at begin node={\raggedright}]
+    at (#1+0.55,#2-2.98) {#5};
+  \draw[#3!30, line width=0.5pt]
+    (#1+0.55,#2-5.50) -- (#1+8.15,#2-5.50);
+  \node[anchor=west, text=gris,
+        font=\sffamily\fontsize{6.9}{8.2}\selectfont]
+    at (#1+0.55,#2-5.80) {#6};
+  \node[anchor=west, text=#3!80!black,
+        font=\fontsize{8}{9.2}\selectfont]
+    at (#1+2.60,#2-5.80) {#7};
+}
+
+% Flujo entre servicios: \flujo{x}{colorA}{nombreA}{flecha}{colorB}{nombreB}{descripcion}
+\newcommand{\flujo}[7]{%
+  \node[anchor=west, font=\fontsize{7.4}{8.8}\selectfont, text=negro]
+    at (#1,2.62)
+    {\punto{#2}\hspace{0.30em}{\color{#2!80!black}\texttt{#3}}%
+     \hspace{0.30em}#4\hspace{0.30em}%
+     \punto{#5}\hspace{0.30em}{\color{#5!80!black}\texttt{#6}}};
+  \node[anchor=west, text=gris,
+        font=\sffamily\fontsize{7}{8.6}\selectfont]
+    at (#1,2.18) {#7};
 }
 
 \begin{document}
 \begin{tikzpicture}
+\path[use as bounding box] (0,0) rectangle (29.7,21);
 
 % ================================================================
 % TITULO
 % ================================================================
-\node[anchor=north west,
-      font=\bfseries\fontsize{15.5}{19}\selectfont,
-      text=negro] at (-0.15,0.15)
-  {Arquitectura de microservicios por esquema};
-\node[anchor=north west,
-      font=\itshape\fontsize{9}{11}\selectfont,
-      text=gris] at (-0.13,-0.60)
+\node[anchor=west, text=acento2,
+      font=\sffamily\bfseries\fontsize{7.4}{9}\selectfont]
+  at (1.0,20.0) {PROYECTO FINAL~\textperiodcentered{} BASES DE DATOS};
+
+\node[anchor=west, text=negro,
+      font=\sffamily\bfseries\fontsize{20}{24}\selectfont]
+  at (1.0,19.15) {Arquitectura de microservicios por esquema};
+
+\node[anchor=west, text=gris,
+      font=\itshape\fontsize{10}{12}\selectfont]
+  at (1.0,18.42)
   {Sistema de inventario, compras y ventas \textperiodcentered{}
-   PostgreSQL, un esquema por servicio};
-\draw[linea, line width=0.6pt] (-0.15,-0.98) -- (13.75,-0.98);
+   PostgreSQL~\textperiodcentered{} un esquema por servicio};
+
+\draw[linea, line width=0.5pt] (1.0,18.0) -- (28.7,18.0);
 
 % ================================================================
-% CAPA DE REPORTES
+% FILA 1
 % ================================================================
-\draw[band] (-0.15,-1.32) rectangle (13.10,-3.88);
-\node[anchor=north west,
-      font=\sffamily\bfseries\fontsize{9.4}{11}\selectfont,
-      text=negro] at (0.10,-1.50) {REPORTES CORPORATIVOS};
-\node[anchor=north east,
-      font=\ttfamily\fontsize{6.8}{8}\selectfont,
-      text=gris] at (12.92,-1.53) {esquema reportes};
-\node[anchor=north west,
-      font=\sffamily\fontsize{6.6}{7.8}\selectfont,
-      text=gris] at (0.10,-1.83)
-  {solo vistas de lectura, sin tablas propias
-   \textperiodcentered{} Gerencia General y Auditor\'ia};
+\tarjeta{1.0}{17.55}{cCat}{01}{Cat\'alogo y terceros}{catalogo}{7 tablas}
+  {Maestros de sedes, almacenes, productos y terceros.}
+\cuerpo{1.0}{17.55}{cCat}{TABLAS}
+  {sedes\sep almacenes\sep categorias\sep productos\sep proveedores\sep
+  clientes\sep producto\_proveedor}
+  {Rol propietario}{\ttfamily rol\_admin}
 
-% vistas en tres columnas
-\foreach \dx/\vista in {%
-  0.10/{vista\_reporte\_corporativo},
-  4.55/{vista\_compras\_pendientes},
-  9.00/{vista\_saldos\_pendientes}} {%
-  \node[anchor=north west,
-        font=\ttfamily\fontsize{6.1}{8}\selectfont,
-        text=negro] at (\dx,-2.28) {\vista};
-}
-\foreach \dx/\vista in {%
-  0.10/{vista\_inventario\_por\_sede},
-  4.55/{vista\_transferencias\_en\_transito},
-  9.00/{vista\_pedidos\_pendientes}} {%
-  \node[anchor=north west,
-        font=\ttfamily\fontsize{6.1}{8}\selectfont,
-        text=negro] at (\dx,-2.66) {\vista};
-}
-\foreach \dx/\vista in {%
-  0.10/{vista\_alertas\_reabastecimiento},
-  4.55/{vista\_ventas\_mensuales\_por\_sede},
-  9.00/{vista\_devoluciones\_por\_producto}} {%
-  \node[anchor=north west,
-        font=\ttfamily\fontsize{6.1}{8}\selectfont,
-        text=negro] at (\dx,-3.04) {\vista};
-}
-
-% ================================================================
-% SERVICIOS (columna central, de arriba hacia abajo)
-% ================================================================
-\servicio{-4.45}{cCat}{CAT\'ALOGO Y TERCEROS}{catalogo}
-  {sedes \textperiodcentered{} almacenes \textperiodcentered{}
-   categorias \textperiodcentered{} productos \textperiodcentered{}
-   proveedores \textperiodcentered{} clientes \textperiodcentered{}
-   producto\_proveedor}
-  {rol propietario: \texttt{rol\_admin}\enspace\textperiodcentered\enspace
-   datos maestros del sistema}
-
-\servicio{-7.30}{cCom}{COMPRAS Y ABASTECIMIENTO}{compras}
-  {ordenes\_compra \textperiodcentered{} detalle\_orden\_compra
-   \textperiodcentered{} recepciones\_compra \textperiodcentered{}
+\tarjeta{10.5}{17.55}{cCom}{02}{Compras y abastecimiento}{compras}{4 tablas}
+  {\'Ordenes, recepciones y ciclo de abastecimiento.}
+\cuerpo{10.5}{17.55}{cCom}{TABLAS}
+  {ordenes\_compra\sep detalle\_orden\_compra\sep recepciones\_compra\sep
    detalle\_recepcion}
-  {rol propietario: \texttt{rol\_compras}\enspace\textperiodcentered\enspace
-   \'ordenes y recepciones}
+  {Rol propietario}{\ttfamily rol\_compras}
 
-\servicio{-10.15}{cInv}{INVENTARIOS Y TRANSFERENCIAS}{inventarios}
-  {inventarios (particionada por id\_sede) \textperiodcentered{}
-   transferencias \textperiodcentered{} detalle\_transferencia}
-  {rol propietario: \texttt{rol\_inventario}\enspace\textperiodcentered\enspace
-   existencias y traslados}
-
-\servicio{-13.00}{cVen}{VENTAS Y PAGOS}{ventas}
-  {pedidos\_venta (particionada) \textperiodcentered{}
-   detalle\_pedido \textperiodcentered{} pagos \textperiodcentered{}
-   devoluciones \textperiodcentered{} detalle\_devolucion}
-  {rol propietario: \texttt{rol\_vendedor}\enspace\textperiodcentered\enspace
-   pedidos y recaudo}
+\tarjeta{20.0}{17.55}{cInv}{03}{Inventarios y transferencias}{inventarios}{3 tablas}
+  {Existencias y traslados entre almacenes y sedes.}
+\cuerpo{20.0}{17.55}{cInv}{TABLAS}
+  {inventarios (particionada por id\_sede)\sep transferencias\sep
+   detalle\_transferencia}
+  {Rol propietario}{\ttfamily rol\_inventario}
 
 % ================================================================
-% FLUJO FUNCIONAL ENTRE SERVICIOS
+% FILA 2
 % ================================================================
-\draw[flow] (6.40,-6.15) -- (6.40,-7.30);
-\node[anchor=west, rotulo] at (6.62,-6.73)
-  {consulta de producto y proveedor};
+\tarjeta{1.0}{10.50}{cVen}{04}{Ventas y pagos}{ventas}{5 tablas}
+  {Pedidos, pagos, devoluciones y recaudo.}
+\cuerpo{1.0}{10.50}{cVen}{TABLAS}
+  {pedidos\_venta (particionada por id\_sede)\sep detalle\_pedido\sep
+   pagos\sep devoluciones\sep detalle\_devolucion}
+  {Rol propietario}{\ttfamily rol\_vendedor}
 
-\draw[flow] (6.40,-9.00) -- (6.40,-10.15);
-\node[anchor=west, rotulo] at (6.62,-9.58)
-  {entradas de stock};
+\tarjeta{10.5}{10.50}{cIde}{05}{Identidad y accesos}{identidad}{3 tablas}
+  {Personal, credenciales y auditor\'ia de accesos.}
+\cuerpo{10.5}{10.50}{cIde}{TABLAS}
+  {empleados\sep usuarios\sep auditoria\_accesos}
+  {Rol propietario}{\ttfamily rol\_admin}
 
-\draw[biflow] (6.40,-11.85) -- (6.40,-13.00);
-\node[anchor=west, rotulo] at (6.62,-12.43)
-  {reserva y descuento de stock};
-
-% ================================================================
-% RIEL DE IDENTIDAD (izquierda)
-% ================================================================
-\draw[rail] (-0.60,-5.30) -- (-0.60,-15.30);
-\foreach \y in {-5.30,-8.15,-11.00,-13.85} {%
-  \draw[ref] (-0.60,\y) -- (0,\y);
-}
-\node[rotate=90, anchor=south, rotulo] at (-0.88,-10.20)
-  {usuario \textperiodcentered{} sesi\'on \textperiodcentered{} auditor\'ia};
-
-% ================================================================
-% RIEL DE REPORTES (derecha)
-% ================================================================
-\draw[flow] (13.40,-13.85) -- (13.40,-3.88);
-\foreach \y in {-5.30,-8.15,-11.00,-13.85} {%
-  \draw[ref] (12.80,\y) -- (13.40,\y);
-}
-\node[rotate=90, anchor=north, rotulo] at (13.68,-9.00)
-  {SELECT \textperiodcentered{} vistas};
+\tarjeta{20.0}{10.50}{cRep}{06}{Reportes corporativos}{reportes}{9 vistas}
+  {Vistas de solo lectura para gerencia y auditor\'ia.}
+\cuerpo{20.0}{10.50}{cRep}{VISTAS}
+  {vista\_reporte\_corporativo\sep vista\_inventario\_por\_sede\sep
+   vista\_alertas\_reabastecimiento\sep vista\_compras\_pendientes\sep
+   vista\_saldos\_pendientes\sep vista\_transferencias\_en\_transito\sep
+   vista\_pedidos\_pendientes\sep vista\_ventas\_mensuales\_por\_sede\sep
+   vista\_devoluciones\_por\_producto}
+  {Responsables}{\sffamily Gerencia General~\textperiodcentered{} Auditor\'ia}
 
 % ================================================================
-% CAPA DE IDENTIDAD
+% BANDA DE FLUJOS
 % ================================================================
-\draw[band] (-0.15,-15.30) rectangle (13.10,-16.80);
-\node[anchor=north west,
-      font=\sffamily\bfseries\fontsize{9.4}{11}\selectfont,
-      text=negro] at (0.10,-15.47) {IDENTIDAD Y ACCESOS};
-\node[anchor=north east,
-      font=\ttfamily\fontsize{6.8}{8}\selectfont,
-      text=gris] at (12.92,-15.50) {esquema identidad};
-\node[anchor=north west,
-      font=\ttfamily\fontsize{6.2}{7.6}\selectfont,
-      text=negro] at (0.10,-15.92)
-  {empleados \textperiodcentered{} usuarios \textperiodcentered{}
-   auditoria\_accesos};
-\node[anchor=north west,
-      font=\sffamily\fontsize{6.5}{7.6}\selectfont,
-      text=gris] at (0.10,-16.32)
-  {rol propietario: \texttt{rol\_admin}\enspace\textperiodcentered\enspace
-   valida usuario y registra auditor\'ia para todos los servicios};
+\filldraw[fill=fondo, draw=linea, line width=0.7pt, rounded corners=5pt]
+  (1.0,1.55) rectangle (28.7,3.65);
 
-% ================================================================
-% LEYENDA
-% ================================================================
-\node[anchor=north west,
-      font=\sffamily\fontsize{6.4}{8}\selectfont,
-      text=gris] at (-0.13,-17.20)
-  {\textcolor{gris}{---} l\'inea continua: flujo funcional entre servicios
-   \quad\textperiodcentered\quad
-   \textcolor{grisClaro}{- - -} referencia l\'ogica entre esquemas, sin clave
-   for\'anea f\'isica};
+\node[anchor=west, text=acento2,
+      font=\sffamily\bfseries\fontsize{7.4}{9}\selectfont]
+  at (1.35,3.32) {FLUJOS ENTRE SERVICIOS};
+
+\node[anchor=east, text=grisClaro,
+      font=\sffamily\fontsize{6.8}{8}\selectfont]
+  at (28.35,3.32)
+  {referencias l\'ogicas entre esquemas, sin claves for\'aneas f\'isicas};
+
+\flujo{1.35}{cCat}{catalogo}{\flechita}{cCom}{compras, ventas}
+  {productos y terceros}
+\flujo{6.77}{cCom}{compras}{\flechita}{cInv}{inventarios}
+  {entradas de stock}
+\flujo{12.19}{cInv}{inventarios}{\flechitaD}{cVen}{ventas}
+  {reserva y descuento}
+\flujo{17.61}{cIde}{identidad}{\flechita}{neutro}{todos}
+  {usuario, sesi\'on y auditor\'ia}
+\flujo{23.03}{neutro}{todos}{\flechita}{cRep}{reportes}
+  {vistas SELECT de lectura}
 
 \end{tikzpicture}
 \end{document}
