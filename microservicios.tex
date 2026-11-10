@@ -2,7 +2,7 @@
 % ============================================================================
 % Arquitectura de microservicios por esquema
 % Proyecto Final de Bases de Datos - Inventario, Compras y Ventas (PostgreSQL)
-% Seis tarjetas compactas en dos filas de tres, conectadas con flechas.
+% Seis tarjetas en dos filas de tres, conectadas con arcos y etiquetas.
 % ============================================================================
 \documentclass[tikz, border=0pt]{standalone}
 
@@ -15,7 +15,7 @@
 
 % ---------------------------------------------------------------- paleta
 \definecolor{negro}{HTML}{1F2933}
-\definecolor{gris}{HTML}{52606D}
+\definecolor{gris}{HTML}{3E4C59}
 \definecolor{grisClaro}{HTML}{7B8794}
 \definecolor{linea}{HTML}{D9E2EC}
 \definecolor{fondo}{HTML}{F7F8FA}
@@ -34,80 +34,80 @@
 
 % \nodo{x}{y}{color}{numero}{titulo}{esquema}{palabras clave}{pie}
 \newcommand{\nodo}[8]{%
-  \filldraw[fill=#3!12, draw=#3!70, line width=0.9pt, rounded corners=5pt]
-    (#1,#2) rectangle ++(6.8,-4.4);
+  \filldraw[fill=#3!13, draw=#3!75, line width=1pt, rounded corners=6pt]
+    (#1,#2) rectangle ++(7.4,-5.3);
   \node[text=#3!80!black,
-        font=\sffamily\bfseries\fontsize{8}{9}\selectfont]
-    at (#1+3.4,#2-0.40) {#4};
+        font=\sffamily\bfseries\fontsize{10}{11.5}\selectfont]
+    at (#1+3.7,#2-0.47) {#4};
   \node[text=#3!80!black,
-        font=\sffamily\bfseries\fontsize{13}{15}\selectfont,
-        text width=6.3cm, align=center]
-    at (#1+3.4,#2-0.92) {#5};
-  \draw[#3!35, line width=0.5pt]
-    (#1+2.25,#2-1.38) -- (#1+4.55,#2-1.38);
-  \node[font=\fontsize{9.2}{11}\selectfont, text=gris]
-    at (#1+3.4,#2-1.75)
+        font=\sffamily\bfseries\fontsize{15}{17.5}\selectfont,
+        text width=6.9cm, align=center]
+    at (#1+3.7,#2-1.08) {#5};
+  \draw[#3!35, line width=0.55pt]
+    (#1+2.35,#2-1.62) -- (#1+5.05,#2-1.62);
+  \node[font=\fontsize{10.4}{12.4}\selectfont, text=gris]
+    at (#1+3.7,#2-2.02)
     {\textsf{esquema}\enspace{\ttfamily\color{#3!80!black}#6}};
   \node[anchor=north, text=negro,
-        font=\sffamily\fontsize{8.8}{10.6}\selectfont,
-        text width=6.1cm, align=center]
-    at (#1+3.4,#2-2.05) {#7};
-  \draw[#3!25, line width=0.5pt]
-    (#1+0.6,#2-3.15) -- (#1+6.2,#2-3.15);
-  \node[text=gris, font=\sffamily\fontsize{8.6}{10.2}\selectfont,
-        text width=6.1cm, align=center]
-    at (#1+3.4,#2-3.55) {#8};
+        font=\sffamily\fontsize{9.8}{11.8}\selectfont,
+        text width=6.9cm, align=center]
+    at (#1+3.7,#2-2.42) {#7};
+  \draw[#3!25, line width=0.55pt]
+    (#1+0.65,#2-3.9) -- (#1+6.75,#2-3.9);
+  \node[text=gris, font=\sffamily\fontsize{9.6}{11.4}\selectfont,
+        text width=6.9cm, align=center]
+    at (#1+3.7,#2-4.38) {#8};
 }
 
 % ---------------------------------------------------------------- flechas
 \tikzset{
-  flujo/.style={-{Stealth[length=5pt, width=3.8pt]},
-    draw=gris, line width=1.1pt},
-  flujoD/.style={{Stealth[length=5pt, width=3.8pt]}%
-    -{Stealth[length=5pt, width=3.8pt]}, draw=gris, line width=1.1pt},
-  flujoDash/.style={-{Stealth[length=5pt, width=3.8pt]},
-    draw=gris, line width=1pt, dash pattern=on 3pt off 2.4pt},
-  rotulo/.style={font=\sffamily\fontsize{8.8}{10.4}\selectfont,
-    text=gris, fill=white, inner sep=2pt, align=center}
+  flujo/.style={-{Stealth[length=6pt, width=4.5pt]},
+    draw=gris, line width=1.25pt},
+  flujoD/.style={{Stealth[length=6pt, width=4.5pt]}%
+    -{Stealth[length=6pt, width=4.5pt]}, draw=gris, line width=1.25pt},
+  flujoDash/.style={-{Stealth[length=6pt, width=4.5pt]},
+    draw=gris, line width=1.15pt, dash pattern=on 3.2pt off 2.6pt},
+  rotulo/.style={font=\sffamily\fontsize{10}{12}\selectfont,
+    text=gris, fill=white, inner sep=2.2pt, align=center}
 }
 
 \begin{document}
 \begin{tikzpicture}
-\path[use as bounding box] (0,0) rectangle (28.7,18);
+\path[use as bounding box] (0,0) rectangle (29.7,21);
 
 % ================================================================
 % TITULO
 % ================================================================
 \node[anchor=west, text=acento2,
-      font=\sffamily\bfseries\fontsize{7.2}{8.6}\selectfont]
-  at (0.8,17.2) {PROYECTO FINAL~\textperiodcentered{} BASES DE DATOS};
+      font=\sffamily\bfseries\fontsize{8.8}{10.4}\selectfont]
+  at (1.05,20.35) {PROYECTO FINAL~\textperiodcentered{} BASES DE DATOS};
 
 \node[anchor=west, text=negro,
-      font=\sffamily\bfseries\fontsize{19}{23}\selectfont]
-  at (0.8,16.45) {Arquitectura de microservicios por esquema};
+      font=\sffamily\bfseries\fontsize{22}{26}\selectfont]
+  at (1.05,19.55) {Arquitectura de microservicios por esquema};
 
 \node[anchor=west, text=gris,
-      font=\itshape\fontsize{9.5}{11.5}\selectfont]
-  at (0.8,15.75)
+      font=\itshape\fontsize{10.8}{12.8}\selectfont]
+  at (1.05,18.82)
   {Sistema de inventario, compras y ventas~\textperiodcentered{}
    PostgreSQL~\textperiodcentered{} un esquema por servicio};
 
-\draw[linea, line width=0.5pt] (0.8,15.35) -- (27.9,15.35);
+\draw[linea, line width=0.55pt] (1.05,18.45) -- (28.65,18.45);
 
 % ================================================================
 % FILA 1
 % ================================================================
-\nodo{0.8}{14.6}{cCat}{01}{Cat\'alogo y terceros}{catalogo}
+\nodo{1.05}{17.85}{cCat}{01}{Cat\'alogo y terceros}{catalogo}
   {sedes\sep almacenes\sep productos\sep terceros}
   {{\bfseries 7 tablas}\enspace{\color{gris}\textperiodcentered}\enspace
    {\ttfamily\color{cCat!80!black}rol\_admin}}
 
-\nodo{10.95}{14.6}{cCom}{02}{Compras y abastecimiento}{compras}
+\nodo{11.15}{17.85}{cCom}{02}{Compras y abastecimiento}{compras}
   {\'ordenes\sep recepciones}
   {{\bfseries 4 tablas}\enspace{\color{gris}\textperiodcentered}\enspace
    {\ttfamily\color{cCom!80!black}rol\_compras}}
 
-\nodo{21.1}{14.6}{cInv}{03}{Inventarios y transferencias}{inventarios}
+\nodo{21.35}{17.85}{cInv}{03}{Inventarios y transferencias}{inventarios}
   {existencias\sep transferencias}
   {{\bfseries 3 tablas}\enspace{\color{gris}\textperiodcentered}\enspace
    {\ttfamily\color{cInv!80!black}rol\_inventario}}
@@ -115,48 +115,55 @@
 % ================================================================
 % FILA 2
 % ================================================================
-\nodo{0.8}{7.6}{cVen}{04}{Ventas y pagos}{ventas}
+\nodo{1.05}{10.95}{cVen}{04}{Ventas y pagos}{ventas}
   {pedidos\sep pagos\sep devoluciones}
   {{\bfseries 5 tablas}\enspace{\color{gris}\textperiodcentered}\enspace
    {\ttfamily\color{cVen!80!black}rol\_vendedor}}
 
-\nodo{10.95}{7.6}{cIde}{05}{Identidad y accesos}{identidad}
+\nodo{11.15}{10.95}{cIde}{05}{Identidad y accesos}{identidad}
   {empleados\sep usuarios\sep auditor\'ia}
   {{\bfseries 3 tablas}\enspace{\color{gris}\textperiodcentered}\enspace
    {\ttfamily\color{cIde!80!black}rol\_admin}}
 
-\nodo{21.1}{7.6}{cRep}{06}{Reportes corporativos}{reportes}
+\nodo{21.35}{10.95}{cRep}{06}{Reportes corporativos}{reportes}
   {vistas de solo lectura}
   {{\bfseries 9 vistas}\enspace{\color{gris}\textperiodcentered}\enspace
    Gerencia/Auditor\'ia}
 
 % ================================================================
-% FLECHAS ENTRE SERVICIOS
+% ARCOS ENTRE SERVICIOS
 % ================================================================
-\draw[flujo] (7.6,12.4) -- (10.95,12.4);
-\node[rotulo] at (9.275,12.8) {productos y proveedores};
+% 01 -> 02
+\draw[flujo] (8.45,15.2) to[bend left=30] (11.15,15.2);
+\node[rotulo] at (9.8,16.55) {productos y\\proveedores};
 
-\draw[flujo] (17.75,12.4) -- (21.1,12.4);
-\node[rotulo] at (19.425,12.8) {entradas de stock};
+% 02 -> 03
+\draw[flujo] (18.55,15.2) to[bend left=30] (21.35,15.2);
+\node[rotulo] at (19.95,16.55) {entradas de\\stock};
 
-\draw[flujo] (4.2,10.2) -- (4.2,7.6);
-\node[rotulo, anchor=west] at (4.45,8.9) {productos y terceros};
+% 01 -> 04
+\draw[flujo] (4.75,12.55) to[bend left=30] (4.75,10.95);
+\node[rotulo, anchor=west] at (5.45,11.75) {productos y terceros};
 
-\draw[flujo] (10.95,5.4) -- (7.6,5.4);
-\node[rotulo] at (9.275,5.8) {usuario y sesi\'on};
+% 05 -> 04
+\draw[flujo] (11.15,8.3) to[bend right=30] (8.45,8.3);
+\node[rotulo] at (9.8,9.55) {usuario y\\sesi\'on};
 
-\draw[flujoDash] (25.5,10.2) -- (25.5,7.6);
-\node[rotulo, anchor=west] at (25.75,8.9) {vistas SELECT};
+% 03 -> 06 (solo lectura)
+\draw[flujoDash] (25.05,12.55) to[bend left=30] (25.05,10.95);
+\node[rotulo, anchor=west] at (25.7,11.75) {vistas SELECT};
 
-\draw[flujoD] (23.5,10.2) -- (5.4,7.6);
-\node[rotulo] at (14.35,9.35) {reserva y descuento};
+% 03 <-> 04
+\draw[flujoD] (22.2,12.55)
+  .. controls (18.6,11.45) and (10.8,11.15) .. (7.2,10.95);
+\node[rotulo] at (14.65,11.82) {reserva y descuento};
 
 % ================================================================
 % NOTA
 % ================================================================
-\node[text=gris, font=\sffamily\fontsize{8.8}{10.6}\selectfont,
-      text width=24cm, align=center]
-  at (14.35,2.35)
+\node[text=gris, font=\sffamily\fontsize{10.4}{12.4}\selectfont,
+      text width=26.3cm, align=center]
+  at (14.85,3.4)
   {Identidad valida usuario y sesi\'on en todos los servicios~\textperiodcentered{}
    Reportes consume vistas SELECT de los cinco esquemas operativos.};
 
