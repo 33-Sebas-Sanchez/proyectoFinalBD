@@ -1,0 +1,457 @@
+% !TEX program = xelatex
+% ============================================================================
+% Diccionario de datos
+% Proyecto Final de Bases de Datos - Inventario, Compras y Ventas (PostgreSQL)
+% ============================================================================
+\documentclass[11pt,oneside]{article}
+
+\usepackage{estilo-proyecto}
+\docnombre{Diccionario de datos}
+
+\addto\captionsspanish{\renewcommand{\contentsname}{Contenido}}
+\setcounter{tocdepth}{1}
+
+\begin{document}
+
+\portadilla{Proyecto final \textperiodcentered{} Bases de datos}
+  {Diccionario de datos}
+  {Sistema de inventario, compras y ventas \textperiodcentered{} PostgreSQL}
+
+\tableofcontents
+\vspace{0.5em}
+
+\section{Introducci\'on}
+
+Este diccionario documenta las veintid\'os tablas del sistema de gesti\'on de
+\textbf{inventario, compras y ventas} implementado en PostgreSQL. La base de
+datos adopta una arquitectura de \textit{microservicios por esquema}: cada
+servicio es propietario de un esquema independiente y expone sus datos al
+resto mediante referencias l\'ogicas.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} >{\ttfamily\small}l
+                    >{\small}l
+                    >{\centering\small\arraybackslash}p{1.5cm} @{}}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries\footnotesize Esquema} &
+{\sffamily\bfseries\footnotesize Responsabilidad} &
+{\sffamily\bfseries\footnotesize Tablas} \\
+\midrule
+catalogo    & Maestros: sedes, almacenes, productos y terceros & 7 \\
+compras     & \'Ordenes y recepciones de abastecimiento        & 4 \\
+inventarios & Existencias y transferencias entre almacenes     & 3 \\
+ventas      & Pedidos, pagos y devoluciones                    & 5 \\
+identidad   & Empleados, usuarios y auditor\'ia de accesos     & 3 \\
+\midrule
+            & \sffamily\footnotesize Total                     & 22 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.3em}
+En las tablas se emplean las siguientes convenciones:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item \pk{atributo}: clave primaria, simple o parte de una clave compuesta.
+  \item \fk{atributo}: clave for\'anea hacia otra tabla.
+  \item \uq{atributo}: restricci\'on de unicidad adicional.
+  \item Cuando la clave primaria es compuesta se indica en una nota bajo la tabla.
+\end{itemize}
+
+% ============================================================================
+\esquema{catalogo}{Cat\'alogo y terceros. Datos maestros del sistema: sedes,
+almacenes, productos y actores externos.}
+
+\begin{tabladic}{sedes}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_sede} & INT & Identificador \'unico autoincremental. \\
+nombre & VARCHAR(50) & NOT NULL \textperiodcentered{} UNIQUE. Nombre visible de la sede. \\
+ciudad & VARCHAR(50) & NOT NULL. Ciudad donde opera la sede. \\
+direccion & VARCHAR(80) & NOT NULL. Direcci\'on f\'isica completa. \\
+tipo\_sede & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Ventas'}, \texttt{'Distribuci\'on'}, \texttt{'Regional'}). \\
+estado & VARCHAR(10) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Activo'}, \texttt{'Inactivo'}) \textperiodcentered{} DEFAULT \texttt{'Activo'}. \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{almacenes}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_almacen} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_sede} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.sedes}.
+  Sede propietaria del almac\'en. \\
+nombre & VARCHAR(50) & NOT NULL. Nombre del almac\'en o bodega. \\
+tipo\_almacen & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Principal'}, \texttt{'Tienda'}, \texttt{'Bodega'}). \\
+estado & VARCHAR(10) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Activo'}, \texttt{'Inactivo'}) \textperiodcentered{} DEFAULT \texttt{'Activo'}. \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{categorias}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_categoria} & INT & Identificador \'unico autoincremental. \\
+\uq{nombre} & VARCHAR(50) & NOT NULL \textperiodcentered{} UNIQUE. Nombre de la categor\'ia. \\
+descripcion & VARCHAR & Descripci\'on libre. Admite nulos. \\
+estado & VARCHAR(10) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Activo'}, \texttt{'Inactivo'}) \textperiodcentered{} DEFAULT \texttt{'Activo'}. \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{productos}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_producto} & INT & Identificador \'unico autoincremental. \\
+\uq{sku} & VARCHAR(50) & NOT NULL \textperiodcentered{} UNIQUE. C\'odigo de referencia de bodega. \\
+nombre & VARCHAR(60) & NOT NULL. Nombre comercial del producto. \\
+\fk{id\_categoria} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.categorias}. \\
+unidad\_medida & VARCHAR(20) & NOT NULL. Por ejemplo: \texttt{'Unidad'}, \texttt{'Kg'}, \texttt{'Litro'}. \\
+precio\_lista & NUMERIC(12,2) & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  Precio de venta base. \\
+estado & VARCHAR(10) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Activo'}, \texttt{'Inactivo'}) \textperiodcentered{} DEFAULT \texttt{'Activo'}. \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{proveedores}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_proveedor} & INT & Identificador \'unico autoincremental. \\
+\uq{identificacion} & INT & NOT NULL \textperiodcentered{} UNIQUE. NIT o c\'edula del proveedor. \\
+razon\_social & VARCHAR(50) & NOT NULL. Nombre legal o raz\'on social. \\
+ciudad & VARCHAR(50) & NOT NULL. Ciudad de operaci\'on. \\
+correo & VARCHAR(50) & NOT NULL. Correo electr\'onico de contacto. \\
+telefono & INT & NOT NULL. N\'umero de contacto. \\
+estado & VARCHAR(10) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Activo'}, \texttt{'Inactivo'}) \textperiodcentered{} DEFAULT \texttt{'Activo'}. \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{clientes}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_cliente} & INT & Identificador \'unico autoincremental. \\
+tipo\_documento & VARCHAR(15) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'CC'}, \texttt{'NIT'}, \texttt{'CE'}, \texttt{'Pasaporte'}). \\
+\uq{num\_documento} & INT & NOT NULL \textperiodcentered{} UNIQUE. N\'umero de documento. \\
+nombre\_completo & VARCHAR(60) & NOT NULL. \\
+correo & VARCHAR(50) & NOT NULL. \\
+telefono & INT & NOT NULL. \\
+estado & VARCHAR(10) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Activo'}, \texttt{'Inactivo'}) \textperiodcentered{} DEFAULT \texttt{'Activo'}. \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{producto\_proveedor}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\fk{id\_producto} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.productos}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+\fk{id\_proveedor} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.proveedores}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+costo\_referencia & NUMERIC(12,2) & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  Costo de compra acordado con el proveedor. \\
+plazo\_entrega & INT & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  D\'ias de entrega pactados. \\
+\bottomrule
+\end{tabularx}
+\nota{Clave primaria compuesta: (\texttt{id\_producto}, \texttt{id\_proveedor}).
+Tabla asociativa de la relaci\'on M:N \textit{suministra}.}
+\end{tabladic}
+
+% ============================================================================
+\esquema{compras}{Compras y abastecimiento. Ciclo de aprovisionamiento desde
+la orden hasta la recepci\'on f\'isica.}
+
+\begin{tabladic}{ordenes\_compra}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_orden\_compra} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_proveedor} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.proveedores}
+  (referencia l\'ogica entre esquemas). \\
+\fk{id\_almacen\_destino} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.almacenes}.
+  Bodega receptora. \\
+\fk{id\_empleado} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{identidad.empleados}.
+  Responsable de la orden. \\
+fecha\_orden & DATE & NOT NULL. Fecha de emisi\'on. \\
+fecha\_estimada & DATE & NOT NULL \textperiodcentered{} CHECK $\geq$ \texttt{fecha\_orden}.
+  Entrega pactada. \\
+estado & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Pendiente'}, \texttt{'Recibida Parcial'}, \texttt{'Recibida Total'},
+  \texttt{'Cancelada'}). \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{detalle\_orden\_compra}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\fk{id\_orden\_compra} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{compras.ordenes\_compra}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+\fk{id\_producto} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.productos}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+cantidad\_solicitada & INT & NOT NULL \textperiodcentered{} CHECK $> 0$. \\
+costo\_unitario & NUMERIC(12,2) & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  Precio negociado en la orden. \\
+\bottomrule
+\end{tabularx}
+\nota{Clave primaria compuesta: (\texttt{id\_orden\_compra}, \texttt{id\_producto}).
+Implementa la agregaci\'on A1 del modelo entidad-relaci\'on.}
+\end{tabladic}
+
+\begin{tabladic}{recepciones\_compra}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_recepcion} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_orden\_compra} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{compras.ordenes\_compra}. \\
+fecha\_recepcion & DATE & NOT NULL. Fecha de ingreso f\'isico a bodega. \\
+estado & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Procesado'}, \texttt{'Parcial'}, \texttt{'Anulado'}). \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{detalle\_recepcion}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\fk{id\_recepcion} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{compras.recepciones\_compra}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+\fk{id\_producto} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.productos}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+cantidad\_recibida & INT & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  Unidades f\'isicamente ingresadas. \\
+\bottomrule
+\end{tabularx}
+\nota{Clave primaria compuesta: (\texttt{id\_recepcion}, \texttt{id\_producto}).}
+\end{tabladic}
+
+% ============================================================================
+\esquema{inventarios}{Inventarios y transferencias. Existencias por almac\'en
+y movimientos de mercanc\'ia entre sedes.}
+
+\begin{tabladic}{inventarios}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\fk{id\_sede} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.sedes}.
+  \textit{Clave de partici\'on LIST.} \\
+\fk{id\_almacen} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.almacenes}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+\fk{id\_producto} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.productos}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+existencia\_actual & INT & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  Unidades disponibles en el almac\'en. \\
+stock\_minimo & INT & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  Umbral de alerta de reabastecimiento. \\
+fecha\_actualizacion & DATE & NOT NULL. \'Ultima fecha de movimiento registrado. \\
+\bottomrule
+\end{tabularx}
+\nota{Clave primaria compuesta: (\texttt{id\_almacen}, \texttt{id\_producto}).
+Tabla particionada por \texttt{id\_sede} (LIST). Implementa la agregaci\'on A2.}
+\end{tabladic}
+
+\begin{tabladic}{transferencias}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_transferencia} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_almacen\_origen} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.almacenes}. \\
+\fk{id\_almacen\_destino} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.almacenes}. \\
+fecha\_solicitud & DATE & NOT NULL. Fecha de solicitud del traslado. \\
+fecha\_despacho & DATE & Admite nulos. Fecha de salida del almac\'en origen. \\
+fecha\_recepcion & DATE & Admite nulos. Fecha de llegada al almac\'en destino. \\
+estado & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Solicitada'}, \texttt{'Despachada'}, \texttt{'Recibida'}, \texttt{'Cancelada'}). \\
+\bottomrule
+\end{tabularx}
+\nota{Restricciones adicionales: \texttt{id\_almacen\_origen <> id\_almacen\_destino};
+\texttt{fecha\_despacho >= fecha\_solicitud}; \texttt{fecha\_recepcion >= fecha\_despacho}.}
+\end{tabladic}
+
+\begin{tabladic}{detalle\_transferencia}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\fk{id\_transferencia} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{inventarios.transferencias}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+\fk{id\_producto} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.productos}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+cantidad\_enviada & INT & NOT NULL \textperiodcentered{} CHECK $> 0$. Unidades despachadas. \\
+cantidad\_recibida & INT & CHECK $\geq 0$ o nulo. Unidades confirmadas en destino. \\
+\bottomrule
+\end{tabularx}
+\nota{Clave primaria compuesta: (\texttt{id\_transferencia}, \texttt{id\_producto}).}
+\end{tabladic}
+
+% ============================================================================
+\esquema{ventas}{Ventas y pagos. Pedidos, medios de pago y devoluciones de
+mercanc\'ia.}
+
+\begin{tabladic}{pedidos\_venta}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_pedido} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_sede} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.sedes}.
+  \textit{Clave de partici\'on LIST.} \\
+\fk{id\_almacen} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.almacenes}.
+  Almac\'en de despacho. \\
+\fk{id\_cliente} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.clientes}. \\
+\fk{id\_empleado} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{identidad.empleados}.
+  Vendedor responsable. \\
+fecha\_pedido & DATE & NOT NULL. \\
+estado & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Pendiente'}, \texttt{'Completado'}, \texttt{'Cancelado'}). \\
+total\_registrado & NUMERIC(12,2) & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  Total calculado del pedido. \\
+\bottomrule
+\end{tabularx}
+\nota{Tabla particionada por \texttt{id\_sede} (LIST): un fragmento por cada sede de ventas.}
+\end{tabladic}
+
+\begin{tabladic}{detalle\_pedido}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\fk{id\_pedido} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{ventas.pedidos\_venta}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+\fk{id\_producto} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.productos}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+cantidad & INT & NOT NULL \textperiodcentered{} CHECK $> 0$. \\
+precio\_unitario & NUMERIC(12,2) & NOT NULL \textperiodcentered{} CHECK $\geq 0$.
+  Precio real de venta en el momento del pedido. \\
+\bottomrule
+\end{tabularx}
+\nota{Clave primaria compuesta: (\texttt{id\_pedido}, \texttt{id\_producto}).
+Implementa la agregaci\'on A3.}
+\end{tabladic}
+
+\begin{tabladic}{pagos}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_pago} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_pedido} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{ventas.pedidos\_venta}. \\
+fecha\_pago & DATE & NOT NULL. \\
+valor & NUMERIC(12,2) & NOT NULL \textperiodcentered{} CHECK $> 0$. \\
+medio\_pago & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Efectivo'}, \texttt{'Tarjeta Debito'}, \texttt{'Tarjeta Credito'},
+  \texttt{'Transferencia'}). \\
+estado & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Confirmado'}, \texttt{'Rechazado'}, \texttt{'Pendiente'}). \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{devoluciones}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_devolucion} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_pedido} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{ventas.pedidos\_venta}. \\
+fecha\_solicitud & DATE & NOT NULL. Fecha de radicaci\'on de la devoluci\'on. \\
+motivo & VARCHAR & NOT NULL. Descripci\'on del motivo. \\
+estado & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Solicitada'}, \texttt{'Aprobada'}, \texttt{'Rechazada'}). \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{detalle\_devolucion}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\fk{id\_devolucion} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{ventas.devoluciones}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+\fk{id\_producto} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.productos}.
+  \textcolor{pk}{\textbf{Parte de la clave primaria.}} \\
+cantidad & INT & NOT NULL \textperiodcentered{} CHECK $> 0$. Unidades devueltas. \\
+condicion\_producto & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Buen Estado'}, \texttt{'Defectuoso'}, \texttt{'Da\~nado'}). \\
+\bottomrule
+\end{tabularx}
+\nota{Clave primaria compuesta: (\texttt{id\_devolucion}, \texttt{id\_producto}).}
+\end{tabladic}
+
+% ============================================================================
+\esquema{identidad}{Identidad y accesos. Personal, credenciales del sistema y
+auditor\'ia de operaciones.}
+
+\begin{tabladic}{empleados}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_empleado} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_sede} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{catalogo.sedes}.
+  Sede asignada al empleado. \\
+\uq{num\_documento} & INT & NOT NULL \textperiodcentered{} UNIQUE. C\'edula o documento de identidad. \\
+nombre\_completo & VARCHAR(60) & NOT NULL. \\
+cargo & VARCHAR(50) & NOT NULL. Por ejemplo: \texttt{'Vendedor'},
+  \texttt{'Jefe de Bodega'}, \texttt{'Gerente'}. \\
+correo & VARCHAR(50) & NOT NULL. Correo institucional. \\
+estado & VARCHAR(10) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Activo'}, \texttt{'Inactivo'}) \textperiodcentered{} DEFAULT \texttt{'Activo'}. \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{usuarios}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_usuario} & INT & Identificador \'unico autoincremental. \\
+\fk{\uq{id\_empleado}} & INT & NOT NULL \textperiodcentered{} UNIQUE \textperiodcentered{}
+  FK $\to$ \texttt{identidad.empleados}. Relaci\'on 1:1 empleado--usuario. \\
+\uq{nombre\_usuario} & VARCHAR(50) & NOT NULL \textperiodcentered{} UNIQUE.
+  Nombre de inicio de sesi\'on. \\
+password\_hash & VARCHAR(255) & NOT NULL. Hash bcrypt de la contrase\~na. \\
+rol & VARCHAR(20) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Administrador'}, \texttt{'Gerencia'}, \texttt{'Inventario'},
+  \texttt{'Compras'}, \texttt{'Vendedor'}, \texttt{'Auditor'}). \\
+estado & VARCHAR(10) & NOT NULL \textperiodcentered{} CHECK IN
+  (\texttt{'Activo'}, \texttt{'Inactivo'}) \textperiodcentered{} DEFAULT \texttt{'Activo'}. \\
+fecha\_creacion & DATE & NOT NULL. Fecha de alta del usuario en el sistema. \\
+\bottomrule
+\end{tabularx}
+\end{tabladic}
+
+\begin{tabladic}{auditoria\_accesos}
+\begin{tabularx}{\linewidth}{A T R}
+\toprule
+\cabecera
+\pk{id\_auditoria} & INT & Identificador \'unico autoincremental. \\
+\fk{id\_usuario} & INT & NOT NULL \textperiodcentered{} FK $\to$ \texttt{identidad.usuarios}. \\
+fecha\_hora & TIMESTAMP & NOT NULL. Momento exacto de la acci\'on registrada. \\
+accion & VARCHAR(50) & NOT NULL. Tipo de operaci\'on:
+  \texttt{'SELECT'}, \texttt{'INSERT'}, \texttt{'UPDATE'}, \texttt{'DELETE'}. \\
+objeto\_consultado & VARCHAR(80) & NOT NULL. Tabla o vista sobre la que se
+  ejecut\'o la acci\'on. \\
+\bottomrule
+\end{tabularx}
+\nota{Tabla de solo escritura para los roles de auditor\'ia: sin UPDATE ni DELETE
+por pol\'itica de seguridad.}
+\end{tabladic}
+
+\end{document}

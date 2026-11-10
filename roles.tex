@@ -1,0 +1,127 @@
+% !TEX program = xelatex
+% ============================================================================
+% Matriz de permisos por rol y modulo (RBAC)
+% Proyecto Final de Bases de Datos - Inventario, Compras y Ventas (PostgreSQL)
+% ============================================================================
+\documentclass[11pt,oneside]{article}
+
+\usepackage{estilo-proyecto}
+\docnombre{Matriz de roles y permisos}
+
+% --- celdas de la matriz ----------------------------------------------------
+\newcommand{\pALL}{%
+  \textcolor{acento}{\sffamily\bfseries ALL}}
+\newcommand{\pCRUD}{%
+  \textcolor{ok!85!black}{\sffamily\bfseries CRUD}}
+\newcommand{\pSEL}{%
+  \textcolor{gris}{\sffamily SELECT}}
+\newcommand{\pSIU}{%
+  \textcolor{gris}{\sffamily\bfseries S/I/U}}
+\newcommand{\pNO}{%
+  \textcolor{grisClaro}{\sffamily---}}
+
+\begin{document}
+
+\portadilla{Proyecto final \textperiodcentered{} Bases de datos}
+  {Matriz de roles y permisos}
+  {Control de acceso basado en roles \textperiodcentered{} PostgreSQL}
+
+\section{Modelo de acceso}
+
+El sistema aplica \textbf{control de acceso basado en roles} (RBAC) con los
+mecanismos nativos de PostgreSQL. Cada microservicio es un esquema independiente
+y los privilegios se conceden a nivel de esquema y de tabla:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item Cada esquema tiene un \textbf{rol propietario} con privilegios plenos
+        sobre sus tablas y secuencias.
+  \item Los roles de negocio reciben \'unicamente los permisos necesarios para
+        su funci\'on.
+  \item El esquema \texttt{reportes} no posee tablas propias: solo vistas de
+        lectura.
+  \item El rol de auditor\'ia puede leer todos los esquemas, incluida la tabla
+        \texttt{auditoria\_accesos}, sin modificar registros.
+\end{itemize}
+
+\section{Matriz de permisos}
+
+\renewcommand{\arraystretch}{1.55}
+\begin{tabularx}{\linewidth}{%
+    >{\sffamily\bfseries\small}p{3.5cm}
+    >{\centering\arraybackslash}X
+    >{\centering\arraybackslash}X
+    >{\centering\arraybackslash}X
+    >{\centering\arraybackslash}X
+    >{\centering\arraybackslash}X
+    >{\centering\arraybackslash}X}
+\toprule
+\rowcolor{fondo}
+  {\sffamily\bfseries\footnotesize Rol} &
+  {\ttfamily\scriptsize catalogo} &
+  {\ttfamily\scriptsize compras} &
+  {\ttfamily\scriptsize inventarios} &
+  {\ttfamily\scriptsize ventas} &
+  {\ttfamily\scriptsize identidad} &
+  {\ttfamily\scriptsize reportes} \\
+\midrule
+Administrador     & \pALL  & \pALL  & \pALL  & \pALL  & \pALL  & \pALL  \\
+Gerencia          & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  \\
+Resp.\ inventario & \pSEL  & \pSEL  & \pCRUD & \pNO   & \pNO   & \pNO   \\
+Resp.\ compras    & \pSEL  & \pCRUD & \pSEL  & \pNO   & \pNO   & \pSEL  \\
+Vendedor          & \pSEL  & \pNO   & \pSEL  & \pSIU  & \pNO   & \pSEL  \\
+Auditor           & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.3em}
+{\footnotesize\sffamily\color{gris}
+  \textbf{ALL}: todos los privilegios \textperiodcentered{}
+  \textbf{CRUD}: SELECT, INSERT, UPDATE, DELETE \textperiodcentered{}
+  \textbf{S/I/U}: SELECT, INSERT, UPDATE \textperiodcentered{}
+  \textbf{---}: sin acceso.}
+
+\newpage
+\section{Descripci\'on de los roles}
+
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\linewidth}{%
+    >{\sffamily\bfseries\small}p{3.3cm}
+    >{\ttfamily\small}p{3.0cm}
+    >{\small\raggedright\arraybackslash}X}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries\footnotesize Rol de negocio} &
+{\sffamily\bfseries\footnotesize Rol de base de datos} &
+{\sffamily\bfseries\footnotesize Responsabilidades} \\
+\midrule
+Administrador & rol\_admin
+  & Administraci\'on completa. Es propietario de los esquemas
+    \texttt{identidad} y \texttt{catalogo}; gestiona usuarios, sedes y
+    par\'ametros del sistema. \\
+Gerencia & rol\_gerencia
+  & Lectura total para supervisi\'on. Consulta los reportes consolidados y
+    no modifica datos operativos. \\
+Resp.\ inventario & rol\_inventario
+  & Gesti\'on de existencias, transferencias entre almacenes y alertas de
+    reabastecimiento. Propietario del esquema \texttt{inventarios}. \\
+Resp.\ compras & rol\_compras
+  & Emisi\'on y seguimiento de \'ordenes de compra y registro de recepciones.
+    Propietario del esquema \texttt{compras}. \\
+Vendedor & rol\_vendedor
+  & Creaci\'on de pedidos y registro de pagos. Puede consultar el cat\'alogo
+    y las existencias, pero no modificar otros esquemas. \\
+Auditor & rol\_auditor
+  & Lectura transversal de todos los esquemas y revisi\'on de la bit\'acora
+    de accesos, sin privilegios de escritura. \\
+\bottomrule
+\end{tabularx}
+
+\section*{Nota de implementaci\'on}
+
+Los privilegios se materializan con \texttt{GRANT USAGE ON SCHEMA} para habilitar
+el acceso al esquema y con \texttt{GRANT SELECT, INSERT, UPDATE, DELETE ON ALL
+TABLES} para los permisos de tabla. Las secuencias requieren adem\'as
+\texttt{GRANT USAGE, SELECT ON ALL SEQUENCES}. La tabla de auditor\'ia se protege
+revocando \texttt{UPDATE} y \texttt{DELETE} para todos los roles de negocio.
+
+\end{document}
