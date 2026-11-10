@@ -1,0 +1,23 @@
+# Temporales de LaTeX
+LaTeX/.aux/
+LaTeX/*.aux
+LaTeX/*.log
+LaTeX/*.out
+LaTeX/*.toc
+LaTeX/*.fls
+LaTeX/*.fdb_latexmk
+LaTeX/*.synctex.gz
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# PDF generados en la carpeta de fuentes (los definitivos van en Documentos/)
+LaTeX/*.pdf
+
+# Sistema
+.DS_Store
+Thumbs.db
