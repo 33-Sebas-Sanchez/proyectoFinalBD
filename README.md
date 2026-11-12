@@ -55,4 +55,4 @@ Requiere XeLaTeX y las tipografías **STIX Two Text**, **STIX Two Math**,
 ## Integrantes
 
 - Sergio Leonardo Moreno Granado
-- Sebastián Sánchez
+- Sebastián Camilo Sánchez Cárdenas 
