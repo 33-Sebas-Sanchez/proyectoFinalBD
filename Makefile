@@ -13,18 +13,22 @@ ENGINE  := -xelatex
 AUXDIR  := .aux
 
 LATEXMK_OPTS := $(ENGINE) -emulate-aux-dir -auxdir=$(AUXDIR) -interaction=nonstopmode
-# El diagrama ER aprobado se compila con pdfLaTeX (lmodern + fontenc T1).
-LATEXMK_PDF := -pdf -emulate-aux-dir -auxdir=$(AUXDIR) -interaction=nonstopmode
 
-.PHONY: todo limpio diagrama_er microservicios diccionario roles dimensiones
+.PHONY: todo limpio planteamiento diagrama_er microservicios diccionario roles dimensiones
 .DEFAULT_GOAL := todo
 
-todo: diagrama_er microservicios diccionario roles dimensiones
+todo: planteamiento diagrama_er microservicios diccionario roles dimensiones
 	@echo "Documentos actualizados en $(DESTDIR)/"
+
+planteamiento:
+	@echo "→ planteamiento"
+	@cd $(TEXDIR) && $(LATEXMK) $(LATEXMK_OPTS) planteamiento.tex >/dev/null
+	@mkdir -p $(DESTDIR)
+	@cp $(TEXDIR)/planteamiento.pdf $(DESTDIR)/Planteamiento_y_diseno_BD.pdf
 
 diagrama_er:
 	@echo "→ diagrama_er"
-	@cd $(TEXDIR) && $(LATEXMK) $(LATEXMK_PDF) diagrama_er.tex >/dev/null
+	@cd $(TEXDIR) && $(LATEXMK) $(LATEXMK_OPTS) diagrama_er.tex >/dev/null
 	@mkdir -p $(DESTDIR)/Diagramas
 	@cp $(TEXDIR)/diagrama_er.pdf $(DESTDIR)/Diagramas/Diagrama_ER_proyecto_final_BD.pdf
 

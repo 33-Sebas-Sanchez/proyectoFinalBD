@@ -20,8 +20,25 @@
 \RequirePackage{unicode-math}
 
 \setmainfont{STIX Two Text}
-\setsansfont{Source Sans 3}[Scale=MatchLowercase]
-\setmonofont{JetBrains Mono}[Scale=MatchLowercase]
+\IfFontExistsTF{SourceSans3-Regular}{%
+  \setsansfont{SourceSans3-Regular}[
+    Scale=MatchLowercase,
+    BoldFont = SourceSans3-Bold,
+    ItalicFont = SourceSans3-It,
+    BoldItalicFont = SourceSans3-BoldIt
+  ]%
+}{%
+  \setsansfont{Source Sans 3}[Scale=MatchLowercase]%
+}
+\IfFontExistsTF{JetBrainsMono-Regular}{%
+  \setmonofont{JetBrainsMono-Regular}[
+    Scale=MatchLowercase,
+    BoldFont = JetBrainsMono-Bold,
+    ItalicFont = JetBrainsMono-Italic
+  ]%
+}{%
+  \setmonofont{JetBrains Mono}[Scale=MatchLowercase]%
+}
 \setmathfont{STIX Two Math}
 
 \RequirePackage[spanish,es-noshorthands]{babel}
@@ -166,8 +183,8 @@
   {\footnotesize\sffamily\color{gris}\raggedright#1\par}}
 
 % Tipos de columna para el diccionario
-\newcolumntype{A}{>{\ttfamily\small\raggedright\arraybackslash}p{3.95cm}}
-\newcolumntype{T}{>{\ttfamily\small\color{gris}\raggedright\arraybackslash}p{2.9cm}}
+\newcolumntype{A}{>{\ttfamily\small\raggedright\arraybackslash}p{4.95cm}}
+\newcolumntype{T}{>{\ttfamily\small\raggedright\arraybackslash\leavevmode\color{gris}}p{2.75cm}}
 \newcolumntype{R}{>{\small\raggedright\arraybackslash}X}
 
 % Cabecera de tabla de diccionario

@@ -64,29 +64,29 @@ Rango hist\'orico transaccional    & 4 meses                 & 4 meses \\
 \section{Notas de implementaci\'on}
 
 \begin{enumerate}[leftmargin=1.5em, itemsep=3pt]
-  \item \textbf{Particiones LIST.} Las tablas \texttt{ventas.pedidos\_venta} e
-        \texttt{inventarios.inventarios} est\'an particionadas por
-        \texttt{id\_sede}. Con seis sedes se crean seis fragmentos por tabla,
-        lo que permite validar consultas sobre particiones espec\'ificas y
-        vistas con \texttt{UNION ALL}.
+  \item \textbf{Particiones LIST.} Las tablas \texttt{pedidos\_venta} (esquema
+        \texttt{ventas\_pagos}) e \texttt{inventarios} (esquema
+        \texttt{inventarios\_\allowbreak transferencias}) contemplan fragmentaci\'on por
+        \texttt{id\_sede}. Con cinco sedes se definen cinco fragmentos por tabla,
+        lo que permite validar consultas por sede y vistas con \texttt{UNION ALL}.
 
-  \item \textbf{Cobertura de roles.} Los treinta empleados y usuarios cubren los
-        seis roles del sistema: administrador, gerencia, inventario, compras,
+  \item \textbf{Cobertura de roles.} Los veinticinco empleados y usuarios cubren los
+        roles definidos en el sistema: administrador, gerencia, inventario, compras,
         vendedor y auditor.
 
-  \item \textbf{Relaci\'on \textit{suministra}.} Con quince proveedores y ciento
-        diez productos se espera una tabla \texttt{producto\_proveedor} de entre
-        ochenta y ciento cincuenta registros, de modo que varios proveedores
-        ofrezcan el mismo producto.
+  \item \textbf{Relaci\'on \textit{suministra}.} Con doce proveedores y cien
+        productos se puebla la tabla \texttt{producto\_proveedor} (en
+        \texttt{catalogo\_terceros}) con cien registros iniciales, uno por
+        producto y abierto a m\'ultiples proveedores por referencia.
 
-  \item \textbf{Consistencia de existencias.} Las 450 ventas y las 80 \'ordenes
-        de compra se distribuyen en los siete meses del hist\'orico para que las
-        consultas de alertas de reabastecimiento y la vista de ventas mensuales
-        devuelvan datos en todos los per\'iodos.
+  \item \textbf{Consistencia de existencias.} Los 350 pedidos de venta y las 75
+        \'ordenes de compra se distribuyen en los cuatro meses del hist\'orico
+        para que las consultas de alertas de reabastecimiento y la vista de
+        ventas mensuales devuelvan datos en todos los per\'iodos.
 
   \item \textbf{Integridad referencial.} Todas las devoluciones referencian
-        pedidos existentes y todas las transferencias enlazan almacenes de sedes
-        diferentes.
+        pedidos existentes y completados, y todas las transferencias enlazan
+        almacenes distintos (\texttt{id\_almacen\_origen <> id\_almacen\_destino}).
 \end{enumerate}
 
 \end{document}

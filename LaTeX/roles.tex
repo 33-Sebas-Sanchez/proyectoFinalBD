@@ -46,8 +46,9 @@ y los privilegios se conceden a nivel de esquema y de tabla:
 \section{Matriz de permisos}
 
 \renewcommand{\arraystretch}{1.55}
+{\setlength{\tabcolsep}{4pt}
 \begin{tabularx}{\linewidth}{%
-    >{\sffamily\bfseries\small}p{3.5cm}
+    >{\sffamily\bfseries\small}p{2.75cm}
     >{\centering\arraybackslash}X
     >{\centering\arraybackslash}X
     >{\centering\arraybackslash}X
@@ -57,12 +58,12 @@ y los privilegios se conceden a nivel de esquema y de tabla:
 \toprule
 \rowcolor{fondo}
   {\sffamily\bfseries\footnotesize Rol} &
-  {\ttfamily\scriptsize catalogo} &
-  {\ttfamily\scriptsize compras} &
-  {\ttfamily\scriptsize inventarios} &
-  {\ttfamily\scriptsize ventas} &
-  {\ttfamily\scriptsize identidad} &
-  {\ttfamily\scriptsize reportes} \\
+  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{catalogo\_\\terceros}} &
+  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{compras\_\\abastecimiento}} &
+  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{inventarios\_\\transferencias}} &
+  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{ventas\_\\pagos}} &
+  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{identidad\_\\accesos}} &
+  {\ttfamily\fontsize{6.8}{8.5}\selectfont reportes} \\
 \midrule
 Administrador     & \pALL  & \pALL  & \pALL  & \pALL  & \pALL  & \pALL  \\
 Gerencia          & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  \\
@@ -71,7 +72,7 @@ Resp.\ compras    & \pSEL  & \pCRUD & \pSEL  & \pNO   & \pNO   & \pSEL  \\
 Vendedor          & \pSEL  & \pNO   & \pSEL  & \pSIU  & \pNO   & \pSEL  \\
 Auditor           & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  \\
 \bottomrule
-\end{tabularx}
+\end{tabularx}}
 
 \vspace{0.3em}
 {\footnotesize\sffamily\color{gris}
@@ -96,17 +97,17 @@ Auditor           & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  \\
 \midrule
 Administrador & rol\_admin
   & Administraci\'on completa. Es propietario de los esquemas
-    \texttt{identidad} y \texttt{catalogo}; gestiona usuarios, sedes y
-    par\'ametros del sistema. \\
+    \texttt{identidad\_accesos} y \texttt{catalogo\_terceros}; gestiona usuarios,
+    sedes y par\'ametros del sistema. \\
 Gerencia & rol\_gerencia
   & Lectura total para supervisi\'on. Consulta los reportes consolidados y
     no modifica datos operativos. \\
 Resp.\ inventario & rol\_inventario
   & Gesti\'on de existencias, transferencias entre almacenes y alertas de
-    reabastecimiento. Propietario del esquema \texttt{inventarios}. \\
+    reabastecimiento. Propietario del esquema \texttt{inventarios\_transferencias}. \\
 Resp.\ compras & rol\_compras
   & Emisi\'on y seguimiento de \'ordenes de compra y registro de recepciones.
-    Propietario del esquema \texttt{compras}. \\
+    Propietario del esquema \texttt{compras\_abastecimiento}. \\
 Vendedor & rol\_vendedor
   & Creaci\'on de pedidos y registro de pagos. Puede consultar el cat\'alogo
     y las existencias, pero no modificar otros esquemas. \\
