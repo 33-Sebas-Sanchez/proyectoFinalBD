@@ -1,0 +1,160 @@
+-- ============================================================================
+-- Proyecto Final - Bases de Datos
+-- Seguridad: roles, usuarios, concesión y revocación de permisos
+
+-- ============================================================================
+
+
+DROP ROLE IF EXISTS rol_administrador;
+DROP ROLE IF EXISTS rol_gerencia;
+DROP ROLE IF EXISTS rol_inventario;
+DROP ROLE IF EXISTS rol_compras;
+DROP ROLE IF EXISTS rol_vendedor;
+DROP ROLE IF EXISTS rol_auditor;
+
+-- ============================================================================
+-- 1) ROLES DE GRUPO: definen el perfil de permisos
+-- ============================================================================
+CREATE ROLE rol_administrador;
+CREATE ROLE rol_gerencia;
+CREATE ROLE rol_inventario;
+CREATE ROLE rol_compras;
+CREATE ROLE rol_vendedor;
+CREATE ROLE rol_auditor;
+
+-- ============================================================================
+-- 3) CONCESIÓN DE PERMISOS (GRANT) POR ROL
+-- ============================================================================
+
+-- ---------------------------------------------------------------------------
+-- 3.1 ADMINISTRADOR: control total sobre todos los esquemas del proyecto.
+-- ---------------------------------------------------------------------------
+GRANT USAGE, CREATE ON SCHEMA
+    catalogo_terceros, compras_abastecimiento, inventarios_transferencias,
+    ventas_pagos, identidad_accesos
+    TO rol_administrador;
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA
+    catalogo_terceros, compras_abastecimiento, inventarios_transferencias,
+    ventas_pagos, identidad_accesos
+    TO rol_administrador;
+
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA
+    catalogo_terceros, compras_abastecimiento, inventarios_transferencias,
+    ventas_pagos, identidad_accesos
+    TO rol_administrador;
+
+-- ---------------------------------------------------------------------------
+-- 3.2 GERENCIA: solo lectura (SELECT) en todo -> visión global sin modificar.
+-- ---------------------------------------------------------------------------
+GRANT USAGE ON SCHEMA
+    catalogo_terceros, compras_abastecimiento, inventarios_transferencias,
+    ventas_pagos, identidad_accesos
+    TO rol_gerencia;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA
+    catalogo_terceros, compras_abastecimiento, inventarios_transferencias,
+    ventas_pagos, identidad_accesos
+    TO rol_gerencia;
+
+-- ---------------------------------------------------------------------------
+-- 3.3 INVENTARIO: gestiona inventarios y transferencias; lee catálogo.
+-- ---------------------------------------------------------------------------
+GRANT USAGE ON SCHEMA inventarios_transferencias, catalogo_terceros TO rol_inventario;
+-- Lectura del catálogo (productos, almacenes, sedes, etc.)
+GRANT SELECT ON ALL TABLES IN SCHEMA catalogo_terceros TO rol_inventario;
+-- Lectura + escritura en inventarios/transferencias
+GRANT SELECT, INSERT, UPDATE, DELETE
+    ON ALL TABLES IN SCHEMA inventarios_transferencias TO rol_inventario;
+
+-- ---------------------------------------------------------------------------
+-- 3.4 COMPRAS: gestiona órdenes/recepciones de compra; lee catálogo.
+-- ---------------------------------------------------------------------------
+GRANT USAGE ON SCHEMA compras_abastecimiento, catalogo_terceros TO rol_compras;
+GRANT SELECT ON ALL TABLES IN SCHEMA catalogo_terceros TO rol_compras;
+GRANT SELECT, INSERT, UPDATE
+    ON ALL TABLES IN SCHEMA compras_abastecimiento TO rol_compras;
+
+-- ---------------------------------------------------------------------------
+-- 3.5 VENDEDOR: gestiona ventas/pagos/devoluciones; lee catálogo y clientes.
+-- ---------------------------------------------------------------------------
+GRANT USAGE ON SCHEMA ventas_pagos, catalogo_terceros TO rol_vendedor;
+GRANT SELECT ON ALL TABLES IN SCHEMA catalogo_terceros TO rol_vendedor;
+GRANT SELECT, INSERT, UPDATE
+    ON ALL TABLES IN SCHEMA ventas_pagos TO rol_vendedor;
+
+-- ---------------------------------------------------------------------------
+-- 3.6 AUDITOR: solo lectura en TODO (incluida la auditoría de accesos).
+-- ---------------------------------------------------------------------------
+GRANT USAGE ON SCHEMA
+    catalogo_terceros, compras_abastecimiento, inventarios_transferencias,
+    ventas_pagos, identidad_accesos
+    TO rol_auditor;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA
+    catalogo_terceros, compras_abastecimiento, inventarios_transferencias,
+    ventas_pagos, identidad_accesos
+    TO rol_auditor;
+
+-- ============================================================================
+
+
+-- Roles operativos: privilegios por defecto en su esquema principal
+ALTER DEFAULT PRIVILEGES IN SCHEMA inventarios_transferencias
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO rol_inventario;
+ALTER DEFAULT PRIVILEGES IN SCHEMA compras_abastecimiento
+    GRANT SELECT, INSERT, UPDATE ON TABLES TO rol_compras;
+ALTER DEFAULT PRIVILEGES IN SCHEMA ventas_pagos
+    GRANT SELECT, INSERT, UPDATE ON TABLES TO rol_vendedor;
+
+-- ============================================================================
+
+
+
+-- --- Administrador (1) ---
+CREATE USER usr_admin_1 WITH PASSWORD 'Admin#2026_1';
+GRANT rol_administrador TO usr_admin_1;
+
+-- --- Gerencia (2) ---
+CREATE USER usr_gerencia_1 WITH PASSWORD 'Geren#2026_1';
+CREATE USER usr_gerencia_2 WITH PASSWORD 'Geren#2026_2';
+GRANT rol_gerencia TO usr_gerencia_1, usr_gerencia_2;
+
+-- --- Inventario (5, uno por sede) ---
+CREATE USER usr_inventario_1 WITH PASSWORD 'Inv#2026_1';
+CREATE USER usr_inventario_2 WITH PASSWORD 'Inv#2026_2';
+CREATE USER usr_inventario_3 WITH PASSWORD 'Inv#2026_3';
+CREATE USER usr_inventario_4 WITH PASSWORD 'Inv#2026_4';
+CREATE USER usr_inventario_5 WITH PASSWORD 'Inv#2026_5';
+GRANT rol_inventario TO
+    usr_inventario_1, usr_inventario_2, usr_inventario_3, usr_inventario_4, usr_inventario_5;
+
+-- --- Compras (2) ---
+CREATE USER usr_compras_1 WITH PASSWORD 'Comp#2026_1';
+CREATE USER usr_compras_2 WITH PASSWORD 'Comp#2026_2';
+GRANT rol_compras TO usr_compras_1, usr_compras_2;
+
+-- --- Vendedor (13) ---
+CREATE USER usr_vendedor_1  WITH PASSWORD 'Vend#2026_1';
+CREATE USER usr_vendedor_2  WITH PASSWORD 'Vend#2026_2';
+CREATE USER usr_vendedor_3  WITH PASSWORD 'Vend#2026_3';
+CREATE USER usr_vendedor_4  WITH PASSWORD 'Vend#2026_4';
+CREATE USER usr_vendedor_5  WITH PASSWORD 'Vend#2026_5';
+CREATE USER usr_vendedor_6  WITH PASSWORD 'Vend#2026_6';
+CREATE USER usr_vendedor_7  WITH PASSWORD 'Vend#2026_7';
+CREATE USER usr_vendedor_8  WITH PASSWORD 'Vend#2026_8';
+CREATE USER usr_vendedor_9  WITH PASSWORD 'Vend#2026_9';
+CREATE USER usr_vendedor_10 WITH PASSWORD 'Vend#2026_10';
+CREATE USER usr_vendedor_11 WITH PASSWORD 'Vend#2026_11';
+CREATE USER usr_vendedor_12 WITH PASSWORD 'Vend#2026_12';
+CREATE USER usr_vendedor_13 WITH PASSWORD 'Vend#2026_13';
+GRANT rol_vendedor TO
+    usr_vendedor_1,  usr_vendedor_2,  usr_vendedor_3,  usr_vendedor_4,  usr_vendedor_5,
+    usr_vendedor_6,  usr_vendedor_7,  usr_vendedor_8,  usr_vendedor_9,  usr_vendedor_10,
+    usr_vendedor_11, usr_vendedor_12, usr_vendedor_13;
+
+-- --- Auditor (2) ---
+CREATE USER usr_auditor_1 WITH PASSWORD 'Audi#2026_1';
+CREATE USER usr_auditor_2 WITH PASSWORD 'Audi#2026_2';
+GRANT rol_auditor TO usr_auditor_1, usr_auditor_2;
+
