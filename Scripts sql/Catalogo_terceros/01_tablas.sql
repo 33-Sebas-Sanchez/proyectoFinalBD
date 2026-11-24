@@ -1,4 +1,4 @@
-============================================================================
+-- ============================================================================
 -- MICROSERVICIO: catalogo_terceros  
 -- 01. Creación de tablas (solo columnas y tipos)
 -- Motor: PostgreSQL (Neon)
