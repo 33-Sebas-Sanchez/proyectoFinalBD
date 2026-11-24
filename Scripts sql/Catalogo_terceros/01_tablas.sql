@@ -1,11 +1,7 @@
 ============================================================================
--- MICROSERVICIO: catalogo_terceros   (instancia/proyecto Neon independiente)
+-- MICROSERVICIO: catalogo_terceros  
 -- 01. Creación de tablas (solo columnas y tipos)
 -- Motor: PostgreSQL (Neon)
--- ----------------------------------------------------------------------------
--- Conéctate a la base del microservicio catalogo_terceros y ejecuta este
--- script. Las tablas viven en el esquema public de SU propia base.
--- Las restricciones se agregan en 02_constraints.sql con ALTER TABLE.
 -- ============================================================================
 
 CREATE TABLE sedes (
