@@ -1,0 +1,466 @@
+-- ============================================================================
+-- Proyecto Final - Bases de Datos
+-- Datos de prueba reproducibles (GENERACIÓN MASIVA)
+-- ----------------------------------------------------------------------------
+-- Estrategia:
+--   * Determinístico: se fija la semilla con setseed(0.42). Cada ejecución
+--     produce EXACTAMENTE el mismo conjunto de datos.
+--   * Volúmenes POR ENCIMA del mínimo solicitado (ver resumen al final del chat).
+--   * Se generan filas con generate_series y se derivan atributos con funciones
+--     determinísticas (md5, mod, etc.) para variar estados/categorías/fechas.
+--   * total_registrado de los pedidos NO se escribe a mano: se calcula con un
+--     UPDATE a partir de SUM(cantidad * precio_unitario) del detalle real.
+--   * Todos los valores respetan los CHECK del diccionario (estados, fechas,
+--     cantidades > 0, precios >= 0, origen <> destino, coherencia de fechas).
+--   * Idempotente: el TRUNCATE inicial permite recargar sin duplicar.
+--
+-- VOLÚMENES GENERADOS:
+--   Sedes: 5 (1 Distribución) | Almacenes: 8 | Categorías: 6 | Productos: 100
+--   Proveedores: 12 | Clientes: 120 | Empleados: 25 | Usuarios: 25
+--   Órdenes compra: 75 (+ detalles + recepciones) | Pedidos venta: 350 (+ detalles + pagos)
+--   Transferencias: 30 | Devoluciones: 25 (todas con detalles)
+-- ============================================================================
+
+-- Semilla determinística: debe ir en la misma sesión que los INSERT que usan random().
+SELECT setseed(0.42);
+
+-- ---------------------------------------------------------------------------
+-- Limpieza previa (orden inverso a las dependencias) para recarga idempotente
+-- ---------------------------------------------------------------------------
+TRUNCATE TABLE
+    ventas_pagos.detalle_devolucion,
+    ventas_pagos.devoluciones,
+    ventas_pagos.pagos,
+    ventas_pagos.detalle_pedido,
+    ventas_pagos.pedidos_venta,
+    inventarios_transferencias.detalle_transferencia,
+    inventarios_transferencias.transferencias,
+    inventarios_transferencias.inventarios,
+    compras_abastecimiento.detalle_recepcion,
+    compras_abastecimiento.recepciones_compra,
+    compras_abastecimiento.detalle_orden_compra,
+    compras_abastecimiento.ordenes_compra,
+    identidad_accesos.auditoria_accesos,
+    identidad_accesos.usuarios,
+    identidad_accesos.empleados,
+    catalogo_terceros.producto_proveedor,
+    catalogo_terceros.clientes,
+    catalogo_terceros.proveedores,
+    catalogo_terceros.productos,
+    catalogo_terceros.categorias,
+    catalogo_terceros.almacenes,
+    catalogo_terceros.sedes
+    RESTART IDENTITY;
+
+-- ###########################################################################
+-- catalogo_terceros
+-- ###########################################################################
+
+-- ---------------------- Sedes: 5 (incluye 1 Distribución) ------------------
+INSERT INTO catalogo_terceros.sedes
+    (id_sede, nombre_sede, ciudad, direccion, tipo_sede, estado) VALUES
+    (1, 'Sede Norte Bogotá',   'Bogotá',   'Calle 170 # 20-30',  'Ventas',       'Activo'),
+    (2, 'Centro Distribución', 'Medellín', 'Carrera 50 # 10-15', 'Distribución', 'Activo'),
+    (3, 'Sede Regional Cali',  'Cali',     'Avenida 6 # 25-40',  'Regional',     'Activo'),
+    (4, 'Sede Sur Bogotá',     'Bogotá',   'Autopista Sur # 45', 'Ventas',       'Activo'),
+    (5, 'Sede Barranquilla',   'Barranquilla', 'Calle 72 # 50-20','Ventas',      'Inactivo');
+
+-- ---------------------- Almacenes: 8 ---------------------------------------
+INSERT INTO catalogo_terceros.almacenes
+    (id_almacen, id_sede, nombre_almacen, tipo_almacen, estado) VALUES
+    (1, 1, 'Almacén Principal Norte', 'Principal', 'Activo'),
+    (2, 1, 'Tienda Norte',            'Tienda',    'Activo'),
+    (3, 2, 'Bodega Central',          'Bodega',    'Activo'),
+    (4, 2, 'Bodega Secundaria',       'Bodega',    'Activo'),
+    (5, 3, 'Tienda Cali',             'Tienda',    'Activo'),
+    (6, 3, 'Almacén Principal Cali',  'Principal', 'Activo'),
+    (7, 4, 'Tienda Sur',              'Tienda',    'Activo'),
+    (8, 5, 'Tienda Barranquilla',     'Tienda',    'Inactivo');
+
+-- ---------------------- Categorías: 6 --------------------------------------
+INSERT INTO catalogo_terceros.categorias
+    (id_categoria, nombre_categoria, descripcion, estado) VALUES
+    (1, 'Bebidas',   'Bebidas gaseosas, jugos y agua',         'Activo'),
+    (2, 'Snacks',    'Pasabocas y productos de paquete',       'Activo'),
+    (3, 'Aseo',      'Productos de aseo y limpieza del hogar',  'Activo'),
+    (4, 'Lácteos',   'Leche, quesos y derivados',              'Activo'),
+    (5, 'Papelería', NULL,                                     'Activo'),
+    (6, 'Abarrotes', 'Granos, enlatados y despensa',            'Activo');
+
+-- ---------------------- Productos: 100 -------------------------------------
+-- Categoría = ciclo 1..6 ; precio_lista entre 1000 y ~50000 ; 1 de cada 20 inactivo.
+INSERT INTO catalogo_terceros.productos
+    (id_producto, sku, nombre, id_categoria, unidad_medida, precio_lista, estado)
+SELECT
+    g,
+    'SKU-' || lpad(g::text, 5, '0'),
+    'Producto ' || g,
+    ((g - 1) % 6) + 1,
+    (ARRAY['Unidad','Gramo','Litro','Caja'])[((g - 1) % 4) + 1],
+    (1000 + (g * 487) % 49000)::numeric(12,2),
+    CASE WHEN g % 20 = 0 THEN 'Inactivo' ELSE 'Activo' END
+FROM generate_series(1, 100) AS g;
+
+-- ---------------------- Proveedores: 12 ------------------------------------
+INSERT INTO catalogo_terceros.proveedores
+    (id_proveedor, identificacion_proveedor, razon_social, ciudad_proveedor, correo_proveedor, telefono_proveedor, estado)
+SELECT
+    g,
+    900000000 + g * 111,
+    'Proveedor Comercial ' || g || ' SAS',
+    (ARRAY['Bogotá','Medellín','Cali','Barranquilla','Bucaramanga'])[((g - 1) % 5) + 1],
+    'contacto' || g || '@proveedor.com',
+    6010000000 + g * 1001,
+    CASE WHEN g % 11 = 0 THEN 'Inactivo' ELSE 'Activo' END
+FROM generate_series(1, 12) AS g;
+
+-- ---------------------- Producto - Proveedor (PK compuesta) ----------------
+-- Cada producto se asocia a 1 proveedor (ciclo 1..12). costo_referencia ~ 70% del precio.
+INSERT INTO catalogo_terceros.producto_proveedor
+    (id_producto, id_proveedor, costo_referencia, plazo_entrega)
+SELECT
+    p.id_producto,
+    ((p.id_producto - 1) % 12) + 1,
+    round(p.precio_lista * 0.7, 2),
+    1 + (p.id_producto % 10)
+FROM catalogo_terceros.productos p;
+
+-- ---------------------- Clientes: 120 --------------------------------------
+INSERT INTO catalogo_terceros.clientes
+    (id_cliente, tipo_documento, num_documento, nombre_completo_cliente, correo_cliente, telefono_cliente, estado)
+SELECT
+    g,
+    (ARRAY['CC','NIT','CE','Pasaporte'])[((g - 1) % 4) + 1],
+    1000000000 + g * 7919,
+    'Cliente ' || g || ' Apellido',
+    'cliente' || g || '@mail.com',
+    3100000000 + g * 137,
+    CASE WHEN g % 15 = 0 THEN 'Inactivo' ELSE 'Activo' END
+FROM generate_series(1, 120) AS g;
+
+-- ###########################################################################
+-- identidad_accesos
+-- ###########################################################################
+
+-- ---------------------- Empleados: 25 --------------------------------------
+-- id_sede = ciclo 1..5 ; cargo rotando ; num_documento único.
+INSERT INTO identidad_accesos.empleados
+    (id_empleado, id_sede, num_documento, nombre_completo, cargo, correo, estado)
+SELECT
+    g,
+    ((g - 1) % 5) + 1,
+    79000000 + g * 53,
+    'Empleado ' || g || ' Apellido',
+    (ARRAY['Administrador','Vendedor','Jefe de Compras','Jefe de Inventario','Auditor'])[((g - 1) % 5) + 1],
+    'empleado' || g || '@empresa.com',
+    CASE WHEN g % 12 = 0 THEN 'Inactivo' ELSE 'Activo' END
+FROM generate_series(1, 25) AS g;
+
+-- ---------------------- Usuarios: 25 (1 por empleado; id_empleado UNIQUE) ---
+-- rol derivado del cargo del empleado.
+INSERT INTO identidad_accesos.usuarios
+    (id_usuario, id_empleado, nombre_usuario, password_hash, rol, estado, fecha_creacion)
+SELECT
+    e.id_empleado,
+    e.id_empleado,
+    'user' || e.id_empleado,
+    '$2b$10$' || md5('pwd' || e.id_empleado) || '00000',
+    CASE e.cargo
+        WHEN 'Administrador'      THEN 'Administrador'
+        WHEN 'Vendedor'           THEN 'Vendedor'
+        WHEN 'Jefe de Compras'    THEN 'Compras'
+        WHEN 'Jefe de Inventario' THEN 'Inventario'
+        WHEN 'Auditor'            THEN 'Auditor'
+        ELSE 'Gerencia'
+    END,
+    e.estado,
+    DATE '2026-01-01' + (e.id_empleado % 60)
+FROM identidad_accesos.empleados e;
+
+-- ---------------------- Auditoría de accesos: 50 ---------------------------
+INSERT INTO identidad_accesos.auditoria_accesos
+    (id_auditoria, id_usuario, fecha_hora, accion, objeto_consultado)
+SELECT
+    g,
+    ((g - 1) % 25) + 1,
+    DATE '2026-03-01' + (g % 30),
+    (ARRAY['LOGIN','CONSULTA','EXPORTA','ACTUALIZA'])[((g - 1) % 4) + 1],
+    (ARRAY['ventas_pagos.pedidos_venta','compras_abastecimiento.ordenes_compra',
+           'inventarios_transferencias.inventarios','catalogo_terceros.productos'])[((g - 1) % 4) + 1]
+FROM generate_series(1, 50) AS g;
+
+-- ###########################################################################
+-- compras_abastecimiento
+-- ###########################################################################
+
+-- ---------------------- Órdenes de compra: 75 ------------------------------
+-- fecha_estimada = fecha_orden + (3..12 días) -> cumple fecha_estimada >= fecha_orden.
+-- id_empleado restringido a empleados con rol de compras-ish (usamos 1..25).
+INSERT INTO compras_abastecimiento.ordenes_compra
+    (id_orden_compra, id_proveedor, id_almacen_destino, id_empleado, fecha_orden, fecha_estimada, estado)
+SELECT
+    g,
+    ((g - 1) % 12) + 1,
+    ((g - 1) % 8) + 1,
+    ((g - 1) % 25) + 1,
+    DATE '2026-01-05' + (g % 40),
+    DATE '2026-01-05' + (g % 40) + (3 + (g % 10)),
+    (ARRAY['Pendiente','Recibida Parcial','Recibida Total','Cancelada'])[((g - 1) % 4) + 1]
+FROM generate_series(1, 75) AS g;
+
+-- ---------------------- Detalle orden de compra (PK compuesta) -------------
+-- 2 líneas por orden: productos (g y g+37 mod 100). DISTINCT ON evita que, si
+-- ambos productos coincidieran, se viole la PK compuesta (id_orden_compra, id_producto).
+INSERT INTO compras_abastecimiento.detalle_orden_compra
+    (id_orden_compra, id_producto, cantidad_solicitada, costo_unitario)
+SELECT DISTINCT ON (cand.id_orden_compra, cand.id_producto)
+    cand.id_orden_compra,
+    cand.id_producto,
+    10 + ((cand.id_orden_compra * 7 + cand.id_producto) % 190),   -- 10..199, siempre > 0
+    round(p.precio_lista * 0.7, 2)
+FROM (
+    SELECT oc.id_orden_compra, prod.id_producto
+    FROM compras_abastecimiento.ordenes_compra oc
+    CROSS JOIN LATERAL (
+        VALUES
+            (((oc.id_orden_compra - 1) % 100) + 1),
+            (((oc.id_orden_compra + 36) % 100) + 1)
+    ) AS prod(id_producto)
+) cand
+JOIN catalogo_terceros.productos p ON p.id_producto = cand.id_producto
+ORDER BY cand.id_orden_compra, cand.id_producto;
+
+-- ---------------------- Recepciones de compra ------------------------------
+-- Una recepción por cada orden que NO esté 'Cancelada' ni 'Pendiente'
+-- (es decir, 'Recibida Parcial' -> 'Parcial' y 'Recibida Total' -> 'Procesado').
+INSERT INTO compras_abastecimiento.recepciones_compra
+    (id_recepcion, id_orden_compra, fecha_recepcion, estado)
+SELECT
+    row_number() OVER (ORDER BY oc.id_orden_compra),
+    oc.id_orden_compra,
+    oc.fecha_estimada,
+    CASE oc.estado
+        WHEN 'Recibida Total'   THEN 'Procesado'
+        WHEN 'Recibida Parcial' THEN 'Parcial'
+    END
+FROM compras_abastecimiento.ordenes_compra oc
+WHERE oc.estado IN ('Recibida Total', 'Recibida Parcial');
+
+-- ---------------------- Detalle recepción (PK compuesta) -------------------
+-- Para cada recepción, se reciben los mismos productos de la orden.
+-- 'Procesado' -> se recibe todo lo solicitado ; 'Parcial' -> se recibe ~mitad.
+INSERT INTO compras_abastecimiento.detalle_recepcion
+    (id_recepcion, id_producto, cantidad_recibida)
+SELECT
+    r.id_recepcion,
+    d.id_producto,
+    CASE r.estado
+        WHEN 'Procesado' THEN d.cantidad_solicitada
+        ELSE (d.cantidad_solicitada / 2)
+    END
+FROM compras_abastecimiento.recepciones_compra r
+JOIN compras_abastecimiento.detalle_orden_compra d
+     ON d.id_orden_compra = r.id_orden_compra;
+
+-- ###########################################################################
+-- inventarios_transferencias
+-- ###########################################################################
+
+-- ---------------------- Inventarios ----------------------------------------
+-- Existencia por (almacen, producto) para un subconjunto: cada almacén lleva
+-- 15 productos (distribución determinística). PK compuesta (id_almacen, id_producto).
+INSERT INTO inventarios_transferencias.inventarios
+    (id_sede, id_almacen, id_producto, existencia_actual, stock_minimo, fecha_actualizacion)
+SELECT
+    a.id_sede,
+    a.id_almacen,
+    prod.id_producto,
+    50 + ((a.id_almacen * 13 + prod.id_producto) % 450),   -- 50..499
+    10 + (prod.id_producto % 30),                          -- 10..39
+    DATE '2026-03-01' + (prod.id_producto % 20)
+FROM catalogo_terceros.almacenes a
+CROSS JOIN LATERAL (
+    SELECT (((a.id_almacen - 1) * 15 + s) % 100) + 1 AS id_producto
+    FROM generate_series(0, 14) AS s
+) AS prod;
+
+-- ---------------------- Transferencias: 30 ---------------------------------
+-- origen <> destino (se fuerza con un desfase). Fechas coherentes:
+--   despacho = solicitud + 1..3 ; recepcion = despacho + 1..3.
+-- Estados variados: para 'Solicitada' no hay despacho ni recepción;
+-- para 'Despachada' hay despacho pero no recepción; 'Recibida' tiene ambas;
+-- 'Cancelada' sin fechas posteriores. (Respeta ck_transferencias_fechas, que
+--  solo compara cuando las fechas no son NULL.)
+INSERT INTO inventarios_transferencias.transferencias
+    (id_transferencia, id_almacen_origen, id_almacen_destino, fecha_solicitud, fecha_despacho, fecha_recepcion, estado)
+SELECT
+    g,
+    ((g - 1) % 8) + 1                                   AS origen,
+    (((g - 1) % 8 + 1 + (g % 7)) % 8) + 1               AS destino_tmp,  -- se corrige abajo
+    DATE '2026-03-01' + (g % 25)                        AS f_sol,
+    CASE WHEN st IN ('Despachada','Recibida') THEN DATE '2026-03-01' + (g % 25) + (1 + g % 3) END,
+    CASE WHEN st = 'Recibida' THEN DATE '2026-03-01' + (g % 25) + (1 + g % 3) + (1 + g % 3) END,
+    st
+FROM (
+    SELECT g,
+           (ARRAY['Solicitada','Despachada','Recibida','Cancelada'])[((g - 1) % 4) + 1] AS st
+    FROM generate_series(1, 30) AS g
+) s;
+
+-- Corrige cualquier caso donde origen = destino (garantiza origen <> destino).
+UPDATE inventarios_transferencias.transferencias
+SET id_almacen_destino = (id_almacen_destino % 8) + 1
+WHERE id_almacen_origen = id_almacen_destino;
+-- Segunda pasada por si el +1 volvió a coincidir.
+UPDATE inventarios_transferencias.transferencias
+SET id_almacen_destino = (id_almacen_destino % 8) + 1
+WHERE id_almacen_origen = id_almacen_destino;
+
+-- ---------------------- Detalle transferencia (PK compuesta) ---------------
+-- 2 productos por transferencia. cantidad_enviada > 0.
+-- cantidad_recibida: igual a enviada si 'Recibida', NULL en otros estados.
+-- DISTINCT ON protege la PK compuesta (id_transferencia, id_producto).
+INSERT INTO inventarios_transferencias.detalle_transferencia
+    (id_transferencia, id_producto, cantidad_enviada, cantidad_recibida)
+SELECT DISTINCT ON (cand.id_transferencia, cand.id_producto)
+    cand.id_transferencia,
+    cand.id_producto,
+    cand.cant,
+    CASE WHEN cand.estado = 'Recibida' THEN cand.cant ELSE NULL END
+FROM (
+    SELECT
+        t.id_transferencia,
+        prod.id_producto,
+        t.estado,
+        5 + ((t.id_transferencia * 3 + prod.id_producto) % 95) AS cant   -- 5..99
+    FROM inventarios_transferencias.transferencias t
+    CROSS JOIN LATERAL (
+        VALUES
+            (((t.id_transferencia - 1) % 100) + 1),
+            (((t.id_transferencia + 49) % 100) + 1)
+    ) AS prod(id_producto)
+) cand
+ORDER BY cand.id_transferencia, cand.id_producto;
+
+-- ###########################################################################
+-- ventas_pagos
+-- ###########################################################################
+
+-- ---------------------- Pedidos de venta: 350 ------------------------------
+-- total_registrado se inicializa en 0 y se calcula luego con UPDATE.
+-- Estados variados. id_almacen debe ser coherente con id_sede, pero el
+-- diccionario no obliga esa relación, así que usamos almacenes de la misma sede
+-- de forma determinística.
+INSERT INTO ventas_pagos.pedidos_venta
+    (id_pedido, id_sede, id_almacen, id_cliente, id_empleado, fecha_pedido, estado, total_registrado)
+SELECT
+    g,
+    sede,
+    alm,
+    ((g - 1) % 120) + 1,
+    ((g - 1) % 25) + 1,
+    DATE '2026-02-01' + (g % 60),
+    (ARRAY['Pendiente','Completado','Cancelado'])[((g - 1) % 3) + 1],
+    0
+FROM (
+    SELECT g,
+           ((g - 1) % 5) + 1 AS sede,
+           -- almacén determinístico dentro del rango 1..8
+           ((g * 2 - 1) % 8) + 1 AS alm
+    FROM generate_series(1, 350) AS g
+) s;
+
+-- ---------------------- Detalle pedido (PK compuesta) ----------------------
+-- 1 a 4 líneas por pedido (número determinístico). cantidad > 0 ;
+-- precio_unitario = precio_lista del producto (>= 0).
+-- Se generan líneas candidatas y luego DISTINCT ON (id_pedido, id_producto)
+-- descarta cualquier colisión de producto dentro del mismo pedido (lo que
+-- violaría la PK compuesta). Esto funciona porque el deduplicado ocurre ANTES
+-- del INSERT, a diferencia de un NOT EXISTS contra la tabla destino.
+INSERT INTO ventas_pagos.detalle_pedido
+    (id_pedido, id_producto, cantidad, precio_unitario)
+SELECT DISTINCT ON (cand.id_pedido, cand.id_producto)
+    cand.id_pedido,
+    cand.id_producto,
+    1 + ((cand.id_pedido + cand.linea) % 9),      -- 1..9, siempre > 0
+    p.precio_lista
+FROM (
+    SELECT
+        pv.id_pedido,
+        linea,
+        (((pv.id_pedido * 3 + linea * 31) % 100) + 1) AS id_producto
+    FROM ventas_pagos.pedidos_venta pv
+    CROSS JOIN LATERAL generate_series(0, (pv.id_pedido % 4)) AS linea   -- 1..4 líneas
+) cand
+JOIN catalogo_terceros.productos p ON p.id_producto = cand.id_producto
+ORDER BY cand.id_pedido, cand.id_producto, cand.linea;
+
+-- ---------------------- Cálculo de total_registrado (UPDATE) ---------------
+-- total = SUM(cantidad * precio_unitario). Pedidos 'Cancelado' se dejan en 0.
+UPDATE ventas_pagos.pedidos_venta pv
+SET total_registrado = COALESCE(d.total, 0)
+FROM (
+    SELECT id_pedido, SUM(cantidad * precio_unitario) AS total
+    FROM ventas_pagos.detalle_pedido
+    GROUP BY id_pedido
+) d
+WHERE d.id_pedido = pv.id_pedido
+  AND pv.estado <> 'Cancelado';
+
+-- ---------------------- Pagos --------------------------------------------
+-- Un pago por cada pedido 'Completado' (valor = total, > 0). Medio y estado variados.
+INSERT INTO ventas_pagos.pagos
+    (id_pago, id_pedido, fecha_pago, valor, medio_pago, estado)
+SELECT
+    row_number() OVER (ORDER BY pv.id_pedido),
+    pv.id_pedido,
+    pv.fecha_pedido + 1,
+    pv.total_registrado,
+    (ARRAY['Efectivo','Tarjeta Debito','Tarjeta Credito','Transferencia'])[((pv.id_pedido - 1) % 4) + 1],
+    'Confirmado'
+FROM ventas_pagos.pedidos_venta pv
+WHERE pv.estado = 'Completado'
+  AND pv.total_registrado > 0;
+
+-- ---------------------- Devoluciones: 25 -----------------------------------
+-- Se asocian a pedidos 'Completado' (reales, con detalle). Estados variados.
+-- IMPORTANTE: el estado/motivo se derivan de rn (número correlativo 1..25),
+-- NO de id_pedido. Los pedidos 'Completado' cumplen id_pedido ≡ 2 (mod 3), así
+-- que (id_pedido-1) % 3 daría SIEMPRE el mismo valor -> todas 'Aprobada'.
+-- Usando rn garantizamos que los 3 estados aparezcan de forma rotada.
+INSERT INTO ventas_pagos.devoluciones
+    (id_devolucion, id_pedido, fecha_solicitud, motivo, estado)
+SELECT
+    c.rn,
+    c.id_pedido,
+    c.fecha_pedido + 5,
+    (ARRAY['Producto defectuoso','Cliente insatisfecho','Error en el pedido','Producto dañado en transporte'])[((c.rn - 1) % 4) + 1],
+    (ARRAY['Solicitada','Aprobada','Rechazada'])[((c.rn - 1) % 3) + 1]
+FROM (
+    SELECT
+        row_number() OVER (ORDER BY pv.id_pedido) AS rn,
+        pv.id_pedido,
+        pv.fecha_pedido
+    FROM ventas_pagos.pedidos_venta pv
+    WHERE pv.estado = 'Completado'
+    ORDER BY pv.id_pedido
+    LIMIT 25
+) c;
+
+-- ---------------------- Detalle devolución (PK compuesta) ------------------
+-- Devuelve 1 línea por devolución: toma un producto realmente comprado en ese pedido.
+INSERT INTO ventas_pagos.detalle_devolucion
+    (id_devolucion, id_producto, cantidad, condicion_producto)
+SELECT
+    dev.id_devolucion,
+    dp.id_producto,
+    1,   -- cantidad > 0 (se devuelve 1 unidad; <= lo comprado)
+    (ARRAY['Buen Estado','Defectuoso','Dañado'])[((dev.id_devolucion - 1) % 3) + 1]
+FROM ventas_pagos.devoluciones dev
+CROSS JOIN LATERAL (
+    SELECT id_producto
+    FROM ventas_pagos.detalle_pedido dp2
+    WHERE dp2.id_pedido = dev.id_pedido
+    ORDER BY dp2.id_producto
+    LIMIT 1
+) dp;

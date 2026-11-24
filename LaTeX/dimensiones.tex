@@ -1,0 +1,92 @@
+% !TEX program = xelatex
+% ============================================================================
+% Propuesta delimitada de dimensiones del sistema
+% Proyecto Final de Bases de Datos - Inventario, Compras y Ventas (PostgreSQL)
+% ============================================================================
+\documentclass[11pt,oneside]{article}
+
+\usepackage{estilo-proyecto}
+\docnombre{Dimensiones del sistema}
+
+\begin{document}
+
+\portadilla{Proyecto final \textperiodcentered{} Bases de datos}
+  {Dimensiones del sistema}
+  {Propuesta delimitada de datos \textperiodcentered{} PostgreSQL}
+
+\section{Descripci\'on}
+
+Este documento fija las dimensiones de datos que guiar\'an la poblaci\'on inicial
+de la base de datos y las pruebas funcionales del sistema. Para cada variable se
+definen dos valores:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item \textbf{Requerimiento base}: m\'inimo necesario para demostrar las
+        funcionalidades del sistema.
+  \item \textbf{Propuesta delimitada}: cantidad realista que permite pruebas de
+        carga leve, consultas por rango de fechas y verificaci\'on de las
+        particiones LIST.
+\end{itemize}
+
+La propuesta delimitada se adopta como est\'andar para la generaci\'on de datos
+de prueba.
+
+\newpage
+\section{Tabla de dimensiones}
+
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{%
+    >{\sffamily\small\raggedright\arraybackslash}p{5.5cm}
+    >{\centering\small\arraybackslash}p{5.1cm}
+    >{\centering\small\bfseries\arraybackslash}p{5.1cm}}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries\footnotesize Variable} &
+{\sffamily\bfseries\footnotesize Requerimiento base} &
+{\sffamily\bfseries\footnotesize Propuesta delimitada} \\
+\midrule
+Sedes totales                      & 4 (1 de distribuci\'on) & 5 (1 distribuci\'on, 4 ventas) \\
+Categor\'ias de producto           & 5                       & 6 \\
+Productos activos                  & 80                      & 100 \\
+Clientes registrados               & 100                     & 120 \\
+Empleados y usuarios               & 20                      & 25 \\
+Proveedores                        & 10                      & 12 \\
+Almacenes y bodegas                & 6                       & 8 \\
+Pedidos de venta                   & 300                     & 350 \\
+\'Ordenes de compra                & 60                      & 75 \\
+Devoluciones                       & 20                      & 25 \\
+Transferencias entre almacenes     & 25                      & 30 \\
+Registros de auditor\'ia           & 500                     & 1\,500 \\
+Rango hist\'orico transaccional    & 4 meses                 & 4 meses \\
+\bottomrule
+\end{tabular}
+
+\section{Notas de implementaci\'on}
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=3pt]
+  \item \textbf{Particiones LIST.} Las tablas \texttt{pedidos\_venta} (esquema
+        \texttt{ventas\_pagos}) e \texttt{inventarios} (esquema
+        \texttt{inventarios\_\allowbreak transferencias}) contemplan fragmentaci\'on por
+        \texttt{id\_sede}. Con cinco sedes se definen cinco fragmentos por tabla,
+        lo que permite validar consultas por sede y vistas con \texttt{UNION ALL}.
+
+  \item \textbf{Cobertura de roles.} Los veinticinco empleados y usuarios cubren los
+        roles definidos en el sistema: administrador, gerencia, inventario, compras,
+        vendedor y auditor.
+
+  \item \textbf{Relaci\'on \textit{suministra}.} Con doce proveedores y cien
+        productos se puebla la tabla \texttt{producto\_proveedor} (en
+        \texttt{catalogo\_terceros}) con cien registros iniciales, uno por
+        producto y abierto a m\'ultiples proveedores por referencia.
+
+  \item \textbf{Consistencia de existencias.} Los 350 pedidos de venta y las 75
+        \'ordenes de compra se distribuyen en los cuatro meses del hist\'orico
+        para que las consultas de alertas de reabastecimiento y la vista de
+        ventas mensuales devuelvan datos en todos los per\'iodos.
+
+  \item \textbf{Integridad referencial.} Todas las devoluciones referencian
+        pedidos existentes y completados, y todas las transferencias enlazan
+        almacenes distintos (\texttt{id\_almacen\_origen <> id\_almacen\_destino}).
+\end{enumerate}
+
+\end{document}

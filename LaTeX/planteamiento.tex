@@ -1,0 +1,452 @@
+% !TEX program = xelatex
+% ============================================================================
+% Planteamiento del problema, supuestos, reglas de negocio y diseno
+% Proyecto Final de Bases de Datos - Inventario, Compras y Ventas (PostgreSQL)
+% Entrega 2 de 4 - Sincronizado con Scripts sql/
+% ============================================================================
+\documentclass[11pt,oneside]{article}
+
+\usepackage{estilo-proyecto}
+\docnombre{Planteamiento y dise\~no del sistema}
+
+\addto\captionsspanish{\renewcommand{\contentsname}{Contenido}}
+\setcounter{tocdepth}{2}
+\setlength{\emergencystretch}{1.6em}
+
+% Notacion compacta de esquema relacional (raggedright para evitar desbordes)
+\newcommand{\rel}[2]{%
+  \par\vspace{0.28em}%
+  {\raggedright\noindent
+   {\ttfamily\small\bfseries\color{acento}#1}\enspace$=$%
+   \enspace({\ttfamily\small #2})\par}}
+\newcommand{\rpk}[1]{\underline{\textbf{#1}}}
+\newcommand{\rfk}[1]{\textcolor{fk}{#1}\textsuperscript{\scriptsize\sffamily FK}}
+\newcommand{\ruq}[1]{#1\textsuperscript{\scriptsize\sffamily UQ}}
+
+\begin{document}
+
+\portadilla{Proyecto final \textperiodcentered{} Bases de datos \textperiodcentered{} Entrega 2 de 4}
+  {Planteamiento del problema y dise\~no arquitect\'onico}
+  {Alcance, supuestos, reglas de negocio, fragmentaci\'on y modelo relacional (3FN)}
+
+\tableofcontents
+\vspace{0.5em}
+
+% ============================================================================
+\section{Planteamiento del problema}
+
+Una empresa comercial opera m\'ultiples sedes de venta al p\'ublico apoyadas por
+un centro de distribuci\'on principal. Cada sede gestiona almacenes o bodegas
+propias, administra inventarios por producto, registra pedidos de venta,
+recauda pagos, tramita devoluciones y coordina tanto compras a proveedores como
+transferencias internas de mercanc\'ia entre bodegas.
+
+A medida que crecen las sedes y el volumen transaccional, centralizar todas las
+operaciones en un esquema monol\'itico sin separaci\'on de responsabilidades
+dificulta el control de accesos por \'area, mezcla datos maestros con
+operaciones diarias e impide aislar la informaci\'on por sede. Al mismo tiempo,
+la direcci\'on general y el equipo de auditor\'ia requieren reportes
+corporativos consolidados (valorizaci\'on de existencias, alertas de
+reabastecimiento, saldos por cobrar, cumplimiento de proveedores y balance
+por sede) sin duplicar conteos ni perder la trazabilidad hist\'orica de
+precios y costos.
+
+Para resolver esta necesidad, se dise\~na e implementa en PostgreSQL una capa
+de datos estructurada bajo una \textbf{arquitectura l\'ogica de microservicios
+por esquema}, combinada con una estrategia de \textbf{fragmentaci\'on horizontal
+por sede} sobre los conjuntos operacionales de inventarios y ventas, y una
+capa dedicada de \textbf{vistas de solo lectura} para integraci\'on corporativa.
+
+% ============================================================================
+\section{Alcance y condiciones m\'inimas}
+
+\subsection{Alcance funcional del proyecto}
+
+El sistema cubre el ciclo completo de datos maestros, abastecimiento,
+existencias, ventas y control de acceso en PostgreSQL, organizado en cuatro
+entregas progresivas. Hasta la \textbf{Entrega 2 de 4}, el alcance cubierto
+y proyectado comprende:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+  \item \textbf{Multi-sede y multi-almac\'en:} soporte m\'inimo para cuatro
+        sedes (incluida una de distribuci\'on) y cuatro bodegas; la propuesta
+        delimitada implementa \textbf{5 sedes} (1 de distribuci\'on, 3 de
+        ventas y 1 regional) y \textbf{8 almacenes}.
+  \item \textbf{Modularidad por microservicios:} separaci\'on expl\'icita en
+        cinco esquemas transaccionales (\texttt{catalogo\_\allowbreak terceros},
+        \texttt{compras\_\allowbreak abastecimiento},
+        \texttt{inventarios\_\allowbreak transferencias},
+        \texttt{ventas\_\allowbreak pagos},
+        \texttt{identidad\_\allowbreak accesos}) y un esquema
+        exclusivo de lectura (\texttt{reportes}).
+  \item \textbf{Modelado e integridad:} diagrama conceptual Entidad--Relaci\'on
+        en notaci\'on de Chen extendida con agregaciones (\texttt{A1}--\texttt{A3}),
+        esquema relacional normalizado hasta 3FN, diccionario de datos y
+        restricciones \texttt{PRIMARY KEY}, \texttt{FOREIGN KEY},
+        \texttt{UNIQUE}, \texttt{NOT NULL}, \texttt{DEFAULT} y \texttt{CHECK}.
+  \item \textbf{Poblaci\'on reproducible:} carga determin\'istica con al menos
+        cuatro meses de hist\'orico (semilla \texttt{setseed(0.42)}) que cubre 100
+        productos, 6 categor\'ias, 12 proveedores, 120 clientes, 25 empleados
+        y usuarios, 75 \'ordenes de compra, 350 pedidos de venta, 30
+        transferencias y 25 devoluciones.
+  \item \textbf{Distribuci\'on, vistas y anal\'itica (proyecci\'on Entregas 3--4):}
+        fragmentaci\'on horizontal por \texttt{id\_sede} sobre inventarios y
+        pedidos de venta, 10 vistas SQL consolidadas en \texttt{reportes}, 6
+        roles RBAC en PostgreSQL, 20 consultas anal\'iticas avanzadas (CTE,
+        funciones de ventana y operaciones de conjuntos) y matriz de pruebas.
+\end{itemize}
+
+\subsection{Exclusiones expl\'icitas}
+
+De acuerdo con los lineamientos del curso, el proyecto se concentra en la
+ingenier\'ia de datos en PostgreSQL y \textbf{no incluye}:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item Programaci\'on de microservicios en lenguajes de aplicaci\'on, API REST,
+        mensajer\'ia as\'incrona, despliegue en contenedores Docker ni
+        interfaces gr\'aficas web o m\'oviles.
+  \item Mecanismos de sincronizaci\'on en tiempo real entre nodos f\'isicos,
+        autenticaci\'on web externa ni pol\'iticas de seguridad por fila (RLS).
+  \item Pruebas de concurrencia, bloqueos transaccionales, reversi\'on
+        distribuida o automatizaci\'on compleja mediante \textit{triggers}.
+\end{itemize}
+
+% ============================================================================
+\section{Supuestos de dise\~no}
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=4pt]
+  \item \textbf{Simulaci\'on acad\'emica en una sola instancia de PostgreSQL.}
+        Implementar seis esquemas separados dentro de una \'unica instancia de
+        PostgreSQL constituye una \textit{simulaci\'on acad\'emica} de la capa
+        de datos de una arquitectura de microservicios. No equivale a desplegar
+        microservicios productivos con motores independientes, aislamiento de
+        red ni consistencia eventual; su prop\'osito es modelar fronteras claras
+        de propiedad sobre las tablas y controlar permisos por esquema.
+
+  \item \textbf{Referencias l\'ogicas frente a claves for\'aneas locales.}
+        En el plano conceptual (Diagrama ER), las asociaciones entre tablas de
+        distintos microservicios se distinguen como referencias l\'ogicas entre
+        esquemas (l\'inea discontinua) para indicar acoplamiento entre servicios.
+        No obstante, al ejecutarse todos los esquemas dentro de la misma base
+        de datos PostgreSQL, el script
+        \texttt{aplicacion\_de\_claves\_\allowbreak foraneas.sql}
+        materializa las 32 restricciones \texttt{FOREIGN KEY} (locales e
+        inter-esquema) para asegurar integridad referencial estricta durante las
+        pruebas.
+
+  \item \textbf{Conservaci\'on hist\'orica de precios y costos.}
+        Se asume que el precio de lista de un producto
+        (\texttt{productos.\allowbreak precio\_lista}) y el costo de referencia
+        del proveedor (\texttt{producto\_\allowbreak proveedor.\allowbreak
+        costo\_\allowbreak referencia}) pueden variar en el tiempo. Por ello,
+        cada detalle de pedido y de orden de compra captura el
+        \texttt{precio\_\allowbreak unitario} y el
+        \texttt{costo\_\allowbreak unitario} vigentes al momento de la
+        operaci\'on, evitando alterar reportes de periodos anteriores.
+
+  \item \textbf{Moneda \'unica, estados l\'ogicos y alcance fiscal.}
+        Todos los valores monetarios se registran en una \'unica moneda
+        (\texttt{NUMERIC(12,2)}, sin tabla de tasas de cambio ni discriminaci\'on
+        tributaria separada). Las entidades maestras y de personal no se eliminan
+        f\'isicamente: emplean borrado l\'ogico mediante \texttt{estado}
+        (\texttt{'Activo'} / \texttt{'Inactivo'}) para preservar el historial
+        transaccional.
+
+  \item \textbf{Identificadores y granularidad temporal.}
+        Las claves primarias son enteros (\texttt{INT}) asignados de manera
+        determin\'istica en los scripts de carga reproducible; las fechas
+        transaccionales y de bit\'acora se modelan con granularidad diaria
+        (\texttt{DATE}). Se asume que un pedido completado admite m\'ultiples
+        pagos parciales y eventuales devoluciones asociadas.
+\end{enumerate}
+
+% ============================================================================
+\newpage
+\section{Reglas de negocio}
+
+\subsection{Cat\'alogo y terceros (\texttt{catalogo\_terceros})}
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item \textbf{RN-01 (Sedes y almacenes):} toda sede posee nombre \'unico y
+        tipo obligatorio (\texttt{'Ventas'}, \texttt{'Distribuci\'on'} o
+        \texttt{'Regional'}). Cada almac\'en pertenece exactamente a una sede y
+        se clasifica como \texttt{'Principal'}, \texttt{'Tienda'} o
+        \texttt{'Bodega'}.
+  \item \textbf{RN-02 (Productos y categor\'ias):} cada producto se identifica
+        por un \texttt{sku} \'unico, pertenece a una \'unica categor\'ia (de
+        nombre \'unico) y tiene \texttt{precio\_lista >= 0}.
+  \item \textbf{RN-03 (Terceros y suministro M:N):} proveedores y clientes
+        tienen n\'umero de identificaci\'on o documento \'unico (\texttt{BIGINT}).
+        Un producto puede vincularse con uno o varios proveedores en
+        \texttt{producto\_proveedor}, registrando \texttt{costo\_referencia >= 0}
+        y \texttt{plazo\_entrega >= 0} en d\'ias.
+\end{itemize}
+
+\subsection{Compras y abastecimiento (\texttt{compras\_abastecimiento})}
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item \textbf{RN-04 (\'Ordenes de compra):} cada orden referencia un
+        proveedor, un almac\'en destino y un empleado responsable; su fecha
+        estimada de entrega debe cumplir \texttt{fecha\_estimada >= fecha\_orden}
+        y su estado pertenece a \texttt{\{'Pendiente', 'Recibida Parcial',
+        'Recibida Total', 'Cancelada'\}}.
+  \item \textbf{RN-05 (Detalle y recepciones):} una orden no repite el mismo
+        producto en \texttt{detalle\_orden\_compra} (clave compuesta
+        \texttt{(id\_orden\_compra, id\_producto)}, agregaci\'on \texttt{A1}) y
+        exige \texttt{cantidad\_solicitada > 0} y \texttt{costo\_unitario >= 0}.
+        Las recepciones parciales o totales registran \texttt{cantidad\_recibida >= 0}
+        por producto en estado \texttt{'Procesado'}, \texttt{'Parcial'} o
+        \texttt{'Anulado'}.
+\end{itemize}
+
+\subsection{Inventarios y transferencias (\texttt{inventarios\_transferencias})}
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item \textbf{RN-06 (Existencias y alertas):} para cada par \'unico
+        \texttt{(id\_almacen, id\_producto)} se almacena \texttt{id\_sede},
+        \texttt{existencia\_\allowbreak actual >= 0} y
+        \texttt{stock\_minimo >= 0}
+        (agregaci\'on \texttt{A2}). Cuando \texttt{existencia\_actual = 0} o
+        \texttt{existencia\_actual < stock\_minimo}, el producto genera alerta
+        de reabastecimiento.
+  \item \textbf{RN-07 (Transferencias entre bodegas):} el almac\'en origen y
+        el almac\'en destino deben ser distintos
+        (\texttt{id\_almacen\_origen <> id\_almacen\_destino}). Las fechas
+        siguen el orden l\'ogico \texttt{fecha\_despacho >= fecha\_solicitud} y
+        \texttt{fecha\_recepcion >= fecha\_despacho} (admitiendo nulos en
+        estados previos al despacho o recepci\'on). Cada l\'inea exige
+        \texttt{cantidad\_enviada > 0} y permite \texttt{cantidad\_recibida}
+        nula mientras el traslado est\'e en tr\'ansito, o \texttt{>= 0} al
+        confirmarse en destino.
+\end{itemize}
+
+\subsection{Ventas, pagos y devoluciones (\texttt{ventas\_pagos})}
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item \textbf{RN-08 (Pedidos de venta):} cada pedido vincula sede, almac\'en
+        de despacho, cliente y vendedor (\texttt{id\_\allowbreak empleado}),
+        con estado en \texttt{\{'Pendiente', 'Completado', 'Cancelado'\}} y
+        \texttt{total\_registrado >= 0}. Cada producto aparece a lo sumo una vez
+        por pedido en \texttt{detalle\_pedido} (agregaci\'on \texttt{A3}) con
+        \texttt{cantidad > 0} y \texttt{precio\_unitario >= 0}.
+  \item \textbf{RN-09 (Pagos y saldos):} todo pago registrado tiene
+        \texttt{valor > 0}, medio permitido (\texttt{'Efectivo'},
+        \texttt{'Tarjeta Debito'}, \texttt{'Tarjeta Credito'},
+        \texttt{'Transferencia'}) y estado (\texttt{'Confirmado'},
+        \texttt{'Rechazado'}, \texttt{'Pendiente'}). El saldo pendiente de un
+        pedido equivale a \texttt{total\_registrado} menos la suma de sus pagos
+        en estado \texttt{'Confirmado'}.
+  \item \textbf{RN-10 (Devoluciones):} toda devoluci\'on se asocia a un pedido
+        existente, con motivo obligatorio, estado en \texttt{\{'Solicitada',
+        'Aprobada', 'Rechazada'\}} y l\'ineas con \texttt{cantidad > 0} y
+        condici\'on (\texttt{'Buen Estado'}, \texttt{'Defectuoso'},
+        \texttt{'Da\~nado'}).
+\end{itemize}
+
+\subsection{Identidad, seguridad y auditor\'ia (\texttt{identidad\_accesos} y \texttt{reportes})}
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item \textbf{RN-11 (Cuentas 1:1 y roles):} cada empleado puede tener como
+        m\'aximo un usuario del sistema (\texttt{id\_\allowbreak empleado} \'unico
+        en \texttt{usuarios}) y un \texttt{nombre\_\allowbreak usuario} \'unico,
+        con uno de los seis roles v\'alidos (\texttt{Administrador},
+        \texttt{Gerencia}, \texttt{Inventario}, \texttt{Compras},
+        \texttt{Vendedor}, \texttt{Auditor}).
+  \item \textbf{RN-12 (Aislamiento y auditor\'ia inmutable):} cada rol de
+        negocio solo modifica tablas del esquema de su responsabilidad. La tabla
+        \texttt{auditoria\_accesos} no permite operaciones \texttt{UPDATE} ni
+        \texttt{DELETE} por parte de roles operativos; \texttt{reportes} expone
+        \'unicamente vistas \texttt{SELECT}.
+\end{itemize}
+
+% ============================================================================
+\section{Arquitectura de microservicios y estrategia de distribuci\'on}
+
+\subsection{Dominios y responsabilidad por esquema}
+
+La base de datos se divide en seis esquemas independientes, detallados
+gr\'aficamente en \texttt{Diagrama\_de\_\allowbreak microservicios\_BD.pdf}
+y cuya matriz de permisos consta en \texttt{Matriz\_roles\_BD.pdf}:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.32}
+\begin{tabularx}{\linewidth}{@{}
+    >{\ttfamily\footnotesize}p{4.5cm}
+    >{\ttfamily\footnotesize}p{3.1cm}
+    >{\centering\small\arraybackslash}p{1.4cm}
+    >{\small\raggedright\arraybackslash}X @{}}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries\footnotesize Esquema / Servicio} &
+{\sffamily\bfseries\footnotesize Rol propietario} &
+{\sffamily\bfseries\footnotesize Objetos} &
+{\sffamily\bfseries\footnotesize Responsabilidad l\'ogica e interacci\'on} \\
+\midrule
+catalogo\_terceros & rol\_admin & 7 tablas &
+  Maestros de sedes, almacenes, categor\'ias, productos, proveedores y clientes;
+  consultado por compras, inventarios y ventas. \\
+compras\_abastecimiento & rol\_compras & 4 tablas &
+  Ciclo de \'ordenes de compra y recepciones; genera entradas de stock hacia
+  inventarios. \\
+inventarios\_transferencias & rol\_inventario & 3 tablas &
+  Control de existencias por sede y almac\'en y traslados entre bodegas;
+  atiende reservas y descuentos de ventas. \\
+ventas\_pagos & rol\_vendedor & 5 tablas &
+  Gesti\'on de pedidos de venta, recaudos y devoluciones por sede. \\
+identidad\_accesos & rol\_admin & 3 tablas &
+  Personal, credenciales de usuario y bit\'acora de accesos transversales. \\
+reportes & {\sffamily\small Gerencia\,/\,Auditor} & 10 vistas &
+  Capa de lectura consolidada (\texttt{SELECT}) sin tablas propias; integra
+  los cinco esquemas operativos. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Estrategia de fragmentaci\'on horizontal por sede}
+
+Para responder tanto a consultas locales de cada sucursal como a consolidados
+corporativos, el dise\~no define \textbf{fragmentaci\'on horizontal primaria
+por sede} (criterio \texttt{LIST} sobre el atributo \texttt{id\_sede}) en dos
+conjuntos operacionales de mayor volumen y localidad:
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=3pt]
+  \item \textbf{\texttt{inventarios\_transferencias.inventarios}:} agrupa las
+        existencias seg\'un la sede propietaria del almac\'en.
+  \item \textbf{\texttt{ventas\_pagos.pedidos\_venta}:} agrupa los pedidos de
+        venta seg\'un la sede donde se origina la operaci\'on.
+\end{enumerate}
+
+\noindent\textbf{Propiedades de la fragmentaci\'on:}
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item \textbf{Condici\'on de fragmentaci\'on:} predicado de igualdad
+        $F_k:\ \texttt{id\_sede} = k$ para $k \in \{1, 2, 3, 4, 5\}$ (cinco
+        fragmentos correspondientes a las cinco sedes registradas en
+        \texttt{catalogo\_terceros.sedes}).
+  \item \textbf{Disjunci\'on y completitud:} como el atributo \texttt{id\_sede}
+        es obligatorio (\texttt{NOT NULL}) y monovaluado en cada fila, cada
+        registro pertenece exactamente a un \'unico fragmento (cero duplicaci\'on
+        entre sedes) y la uni\'on de todos los fragmentos reconstruye el 100\,\%
+        de la tabla l\'ogica.
+  \item \textbf{Estado en Entrega 2 y materializaci\'on en Entrega 3:} en los
+        scripts base actuales (\texttt{Scripts sql/\allowbreak
+        creacion\_de\_tablas.sql}), ambas tablas se crean como tablas
+        relacionales est\'andar que ya incluyen \texttt{id\_sede NOT NULL} y
+        las claves \texttt{(id\_almacen, id\_producto)} y \texttt{(id\_pedido)}
+        para verificar integridad y carga reproducible. En la fase de
+        distribuci\'on (Entrega 3), los fragmentos se materializan mediante
+        tablas f\'isicas por sede o particionamiento declarativo
+        \texttt{PARTITION BY LIST (id\_sede)} (incluyendo \texttt{id\_sede} en
+        la clave primaria compuesta como exige PostgreSQL para particiones
+        nativas), integr\'andose en el esquema \texttt{reportes} a trav\'es de
+        vistas con \texttt{UNION ALL} (\texttt{vista\_inventario\_\allowbreak
+        por\_sede} y \texttt{vista\_ventas\_\allowbreak mensuales\_por\_sede}).
+\end{itemize}
+
+\subsection{Vistas de integraci\'on en \texttt{reportes}}
+
+El esquema \texttt{reportes} contempla diez vistas de solo lectura para consumo
+directo de gerencia, auditor\'ia y roles autorizados:
+\texttt{vista\_\allowbreak inventario\_\allowbreak por\_sede},
+\texttt{vista\_\allowbreak alertas\_\allowbreak reabastecimiento},
+\texttt{vista\_\allowbreak productos\_\allowbreak sin\_inventario},
+\texttt{vista\_\allowbreak ventas\_\allowbreak mensuales\_por\_sede},
+\texttt{vista\_\allowbreak pedidos\_\allowbreak pendientes},
+\texttt{vista\_\allowbreak saldos\_\allowbreak pendientes},
+\texttt{vista\_\allowbreak compras\_\allowbreak pendientes},
+\texttt{vista\_\allowbreak transferencias\_\allowbreak en\_transito},
+\texttt{vista\_\allowbreak devoluciones\_\allowbreak por\_producto} y
+\texttt{vista\_\allowbreak reporte\_\allowbreak corporativo} (con CTE agregadas por sede
+para evitar productos cartesianos entre m\'ultiples relaciones 1:N).
+
+% ============================================================================
+\section{Modelo relacional y normalizaci\'on hasta 3FN}
+
+\subsection{Esquema relacional completo (22 relaciones)}
+
+En la notaci\'on siguiente, la clave primaria aparece \rpk{subrayada}, las
+claves for\'aneas se se\~nalan con \textsuperscript{\scriptsize\sffamily FK}
+y las restricciones de unicidad adicionales con
+\textsuperscript{\scriptsize\sffamily UQ}. Los detalles completos de tipos de
+datos y restricciones \texttt{CHECK} se encuentran en
+\texttt{Diccionario\_de\_datos\_BD.pdf}.
+
+\subsection*{Esquema \texttt{catalogo\_terceros}}
+\rel{sedes}{\rpk{id\_sede}, \ruq{nombre\_sede}, ciudad, direccion, tipo\_sede, estado}
+\rel{almacenes}{\rpk{id\_almacen}, \rfk{id\_sede}, nombre\_almacen, tipo\_almacen, estado}
+\rel{categorias}{\rpk{id\_categoria}, \ruq{nombre\_categoria}, descripcion, estado}
+\rel{productos}{\rpk{id\_producto}, \ruq{sku}, nombre, \rfk{id\_categoria}, unidad\_medida, precio\_lista, estado}
+\rel{proveedores}{\rpk{id\_proveedor}, \ruq{identificacion\_proveedor}, razon\_social, ciudad\_proveedor, correo\_proveedor, telefono\_proveedor, estado}
+\rel{producto\_proveedor}{\rpk{\rfk{id\_producto}}, \rpk{\rfk{id\_proveedor}}, costo\_referencia, plazo\_entrega}
+\rel{clientes}{\rpk{id\_cliente}, tipo\_documento, \ruq{num\_documento}, nombre\_completo\_cliente, correo\_cliente, telefono\_cliente, estado}
+
+\subsection*{Esquema \texttt{compras\_abastecimiento}}
+\rel{ordenes\_compra}{\rpk{id\_orden\_compra}, \rfk{id\_proveedor}, \rfk{id\_almacen\_destino}, \rfk{id\_empleado}, fecha\_orden, fecha\_estimada, estado}
+\rel{detalle\_orden\_compra}{\rpk{\rfk{id\_orden\_compra}}, \rpk{\rfk{id\_producto}}, cantidad\_solicitada, costo\_unitario}
+\rel{recepciones\_compra}{\rpk{id\_recepcion}, \rfk{id\_orden\_compra}, fecha\_recepcion, estado}
+\rel{detalle\_recepcion}{\rpk{\rfk{id\_recepcion}}, \rpk{\rfk{id\_producto}}, cantidad\_recibida}
+
+\subsection*{Esquema \texttt{inventarios\_transferencias}}
+\rel{inventarios}{\rfk{id\_sede}, \rpk{\rfk{id\_almacen}}, \rpk{\rfk{id\_producto}}, existencia\_actual, stock\_minimo, fecha\_actualizacion}
+\rel{transferencias}{\rpk{id\_transferencia}, \rfk{id\_almacen\_origen}, \rfk{id\_almacen\_destino}, fecha\_solicitud, fecha\_despacho, fecha\_recepcion, estado}
+\rel{detalle\_transferencia}{\rpk{\rfk{id\_transferencia}}, \rpk{\rfk{id\_producto}}, cantidad\_enviada, cantidad\_recibida}
+
+\subsection*{Esquema \texttt{ventas\_pagos}}
+\rel{pedidos\_venta}{\rpk{id\_pedido}, \rfk{id\_sede}, \rfk{id\_almacen}, \rfk{id\_cliente}, \rfk{id\_empleado}, fecha\_pedido, estado, total\_registrado}
+\rel{detalle\_pedido}{\rpk{\rfk{id\_pedido}}, \rpk{\rfk{id\_producto}}, cantidad, precio\_unitario}
+\rel{pagos}{\rpk{id\_pago}, \rfk{id\_pedido}, fecha\_pago, valor, medio\_pago, estado}
+\rel{devoluciones}{\rpk{id\_devolucion}, \rfk{id\_pedido}, fecha\_solicitud, motivo, estado}
+\rel{detalle\_devolucion}{\rpk{\rfk{id\_devolucion}}, \rpk{\rfk{id\_producto}}, cantidad, condicion\_producto}
+
+\subsection*{Esquema \texttt{identidad\_accesos}}
+\rel{empleados}{\rpk{id\_empleado}, \rfk{id\_sede}, \ruq{num\_documento}, nombre\_completo, cargo, correo, estado}
+\rel{usuarios}{\rpk{id\_usuario}, \rfk{\ruq{id\_empleado}}, \ruq{nombre\_usuario}, password\_hash, rol, estado, fecha\_creacion}
+\rel{auditoria\_accesos}{\rpk{id\_auditoria}, \rfk{id\_usuario}, fecha\_hora, accion, objeto\_consultado}
+
+\subsection{Justificaci\'on de normalizaci\'on hasta Tercera Forma Normal (3FN)}
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=4pt]
+  \item \textbf{Primera Forma Normal (1FN):} todas las tablas poseen clave
+        primaria definida, dominios at\'omicos (por ejemplo, \texttt{tipo\_documento}
+        separado de \texttt{num\_documento}) y ausencia de grupos repetitivos.
+        Los \'items m\'ultiples de \'ordenes, recepciones, transferencias,
+        pedidos y devoluciones se extraen a sus respectivas tablas de detalle.
+
+  \item \textbf{Segunda Forma Normal (2FN):} las 15 entidades con clave primaria
+        simple cumplen 2FN autom\'aticamente al no existir dependencias
+        parciales. En las \textbf{7 tablas de clave primaria compuesta}
+        (\texttt{producto\_\allowbreak proveedor},
+        \texttt{detalle\_\allowbreak orden\_\allowbreak compra},
+        \texttt{detalle\_\allowbreak recepcion}, \texttt{inventarios},
+        \texttt{detalle\_\allowbreak transferencia},
+        \texttt{detalle\_\allowbreak pedido} y
+        \texttt{detalle\_\allowbreak devolucion}), cada atributo no clave depende
+        funcionalmente de la clave completa: por ejemplo,
+        \texttt{costo\_referencia} y \texttt{plazo\_entrega} dependen de la
+        combinaci\'on \texttt{(id\_producto, id\_proveedor)};
+        \texttt{cantidad} y \texttt{precio\_unitario} dependen del par
+        \texttt{(id\_pedido, id\_producto)}; y \texttt{existencia\_\allowbreak actual} y
+        \texttt{stock\_minimo} dependen del par
+        \texttt{(id\_almacen, id\_producto)}.
+
+  \item \textbf{Tercera Forma Normal (3FN) y desnormalizaci\'on controlada:}
+        los atributos descriptivos de sedes, categor\'ias, proveedores,
+        clientes y empleados residen \'unicamente en sus entidades maestras,
+        evitando dependencias transitivas en las tablas transaccionales. Se
+        mantienen tres decisiones conscientes de dise\~no que no corresponden a
+        anomal\'ias sino a requisitos operativos y de distribuci\'on:
+        \begin{itemize}[leftmargin=1.3em, itemsep=2pt]
+          \item \texttt{inventarios.id\_sede} y \texttt{pedidos\_venta.id\_sede}:
+                aunque la sede puede inferirse a trav\'es del almac\'en, ambos
+                atributos se incluyen expl\'icitamente como \textbf{clave de
+                fragmentaci\'on horizontal} para enrutar particiones por sede
+                sin consultar el esquema \texttt{catalogo\_terceros}.
+          \item \texttt{pedidos\_\allowbreak venta.\allowbreak total\_\allowbreak registrado}:
+                campo calculado como la suma de \texttt{cantidad} $\times$
+                \texttt{precio\_\allowbreak unitario} en
+                \texttt{detalle\_pedido}, mantenido actualizado para agilizar
+                la consulta de saldos y reportes corporativos.
+          \item \texttt{detalle\_pedido.\allowbreak precio\_unitario} y
+                \texttt{detalle\_\allowbreak orden\_\allowbreak compra.\allowbreak
+                costo\_\allowbreak unitario}:
+                representan el valor hist\'orico pactado en la fecha de la
+                transacci\'on y no una copia redundante del precio actual del
+                cat\'alogo.
+        \end{itemize}
+\end{enumerate}
+
+\end{document}
