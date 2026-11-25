@@ -10,6 +10,8 @@ propuesta de dimensiones.
 LaTeX/          Fuentes editables (.tex y .sty)
 Documentos/     PDF finales listos para entregar
 Scripts sql/    Scripts PostgreSQL de esquemas, tablas, restricciones y carga
+Backend/        Microservicios Spring Boot (una base de datos por servicio)
+render.yaml     Blueprint de Render para desplegar los microservicios
 Makefile        Compila y publica los PDF
 ```
 
@@ -51,6 +53,12 @@ texcompile LaTeX/diccionario.tex
 
 Requiere XeLaTeX y las tipografías **STIX Two Text**, **STIX Two Math**,
 **Source Sans 3** y **JetBrains Mono**.
+
+## Backend
+
+`Backend/` contiene seis microservicios Spring Boot, uno por dominio, cada uno
+con su propia base de datos PostgreSQL en Neon. La guía de ejecución local,
+los endpoints y el despliegue en Render están en `Backend/README.md`.
 
 ## Integrantes
 
