@@ -13,6 +13,8 @@
 #
 # Nota: el plan free de Render duerme los servicios tras 15 minutos sin
 # tráfico. La primera petición después de dormir tarda en responder.
+# Cada workspace recibe 750 horas de instancia al mes; los servicios dormidos
+# no consumen horas.
 # ============================================================================
 
 services:

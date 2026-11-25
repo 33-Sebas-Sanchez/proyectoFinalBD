@@ -96,6 +96,15 @@ Cada servicio queda en `https://<nombre>.onrender.com`. El plan free duerme
 los servicios tras 15 minutos sin tráfico; la primera petición tarda en
 responder.
 
+### Límites del plan free
+
+- Render regala **750 horas de instancia al mes** por workspace. Los seis
+  servicios comparten ese cupo.
+- Un servicio free se duerme tras 15 minutos sin tráfico y **no consume horas**
+  mientras está dormido. Al despertar tarda alrededor de un minuto.
+- Si se agotan las 750 horas, Render suspende todos los servicios free hasta
+  el mes siguiente. Para una demo o sustentación no debería ser problema.
+
 ## Arquitectura de datos
 
 - **Una base por microservicio**, no un esquema compartido.
