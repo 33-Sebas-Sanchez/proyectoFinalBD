@@ -35,6 +35,15 @@ cp .env.example .env      # completa las 6 cadenas JDBC de Neon
 El script carga `.env` y arranca el módulo con Maven. Para otro servicio,
 cambia el argumento (`compras-service`, `ventas-service`, etc.).
 
+Para levantar o detener **los 6 servicios juntos sin Docker**:
+
+```bash
+./run-all.sh start          # empaqueta si hace falta y arranca 8081..8086
+./run-all.sh start --build  # recompila los JAR antes de arrancar
+./run-all.sh status
+./run-all.sh stop
+```
+
 Compilar todo sin arrancar:
 
 ```bash
@@ -52,6 +61,15 @@ Todos los servicios exponen:
 | `GET`  | `/api/tablas/{tabla}`         | Primeras filas (`?limite=50`, máximo 200)     |
 | `GET`  | `/api/resumen`                | Conteo de filas por tabla                     |
 | `GET`  | `/api/reportes/resumen`       | Solo en `reportes-service`: consolidado       |
+
+## Endpoints de negocio
+
+- **`catalogo-service` (`8081`):** `GET /api/sedes`, `GET /api/almacenes`, `GET /api/categorias`, `GET|POST /api/productos`, `GET|PUT /api/productos/{id}`, `GET /api/proveedores`, `GET /api/productos/{id}/proveedores`, `GET|POST /api/clientes`.
+- **`compras-service` (`8082`):** `GET|POST /api/ordenes-compra`, `GET /api/ordenes-compra/{id}`, `POST /api/recepciones`.
+- **`inventarios-service` (`8083`):** `GET /api/inventarios` (`?idSede=&idAlmacen=&soloAlertas=true`), `GET /api/inventarios/por-sede`, `PATCH /api/inventarios/{idAlmacen}/{idProducto}`, `GET|POST /api/transferencias`, `GET /api/transferencias/{id}`.
+- **`ventas-service` (`8084`):** `GET|POST /api/pedidos` (`?idSede=&estado=&idCliente=`), `GET /api/pedidos/{id}`, `GET|POST /api/pagos`, `GET /api/devoluciones`.
+- **`identidad-service` (`8085`):** `GET /api/empleados`, `GET /api/usuarios` (sin `password_hash`), `GET /api/auditoria`, `POST /api/auth/login`.
+- **`reportes-service` (`8086`):** `GET /api/reportes/resumen`, `GET /api/reportes/vistas`, `GET /api/reportes/vistas/{vista}`, `GET /api/reportes/corporativo`, `GET /api/reportes/alertas`, `GET /api/reportes/saldos-pendientes`.
 
 Ejemplo:
 
