@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: catalogo-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/catalogo_terceros}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:}
+    hikari:
+      # La aplicación arranca aunque la base aún no responda.
+      initialization-fail-timeout: -1
+      connection-timeout: 30000
+      maximum-pool-size: 5
+  sql:
+    init:
+      mode: never
+
+server:
+  port: ${PORT:8081}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    db:
+      enabled: false
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}

@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: reportes-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/reportes}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:}
+    hikari:
+      initialization-fail-timeout: -1
+      connection-timeout: 30000
+      maximum-pool-size: 5
+  sql:
+    init:
+      mode: never
+
+server:
+  port: ${PORT:8086}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    db:
+      enabled: false
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}
+  servicios:
+    catalogo: ${CATALOGO_URL:http://localhost:8081}
+    compras: ${COMPRAS_URL:http://localhost:8082}
+    inventarios: ${INVENTARIOS_URL:http://localhost:8083}
+    ventas: ${VENTAS_URL:http://localhost:8084}
+    identidad: ${IDENTIDAD_URL:http://localhost:8085}

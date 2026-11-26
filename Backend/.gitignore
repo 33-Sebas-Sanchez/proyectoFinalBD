@@ -1,0 +1,17 @@
+target/
+**/target/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Entorno local ###
+.env
+.runtime/
+*.log
+
+### Sistema ###
+.DS_Store
+Thumbs.db

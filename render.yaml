@@ -1,0 +1,165 @@
+# ============================================================================
+# Blueprint de Render para los 6 microservicios.
+#
+# Las 6 bases de datos viven en Neon (fuera de Render). Este archivo solo
+# crea los servicios web que las consumen.
+#
+# Pasos:
+#   1. Sube este archivo a la rama principal del repositorio.
+#   2. En Render: New > Blueprint > conecta el repositorio.
+#   3. Render pedirá DB_URL, DB_USER y DB_PASSWORD de cada servicio.
+#      Usa la cadena JDBC de Neon (ver Backend/.env.example).
+#   4. Al terminar, cada servicio queda en https://<nombre>.onrender.com
+#
+# Nota: el plan free de Render duerme los servicios tras 15 minutos sin
+# tráfico. La primera petición después de dormir tarda en responder.
+# Cada workspace recibe 750 horas de instancia al mes; los servicios dormidos
+# no consumen horas.
+# ============================================================================
+
+services:
+  - type: web
+    name: catalogo-service
+    runtime: docker
+    plan: free
+    rootDir: Backend
+    dockerfilePath: catalogo-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=75"
+
+  - type: web
+    name: compras-service
+    runtime: docker
+    plan: free
+    rootDir: Backend
+    dockerfilePath: compras-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=75"
+
+  - type: web
+    name: inventarios-service
+    runtime: docker
+    plan: free
+    rootDir: Backend
+    dockerfilePath: inventarios-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=75"
+
+  - type: web
+    name: ventas-service
+    runtime: docker
+    plan: free
+    rootDir: Backend
+    dockerfilePath: ventas-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=75"
+
+  - type: web
+    name: identidad-service
+    runtime: docker
+    plan: free
+    rootDir: Backend
+    dockerfilePath: identidad-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=75"
+
+  - type: web
+    name: reportes-service
+    runtime: docker
+    plan: free
+    rootDir: Backend
+    dockerfilePath: reportes-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=75"
+      # Render entrega el host público; ReportesController le antepone https://
+      - key: CATALOGO_URL
+        fromService:
+          name: catalogo-service
+          type: web
+          property: host
+      - key: COMPRAS_URL
+        fromService:
+          name: compras-service
+          type: web
+          property: host
+      - key: INVENTARIOS_URL
+        fromService:
+          name: inventarios-service
+          type: web
+          property: host
+      - key: VENTAS_URL
+        fromService:
+          name: ventas-service
+          type: web
+          property: host
+      - key: IDENTIDAD_URL
+        fromService:
+          name: identidad-service
+          type: web
+          property: host
