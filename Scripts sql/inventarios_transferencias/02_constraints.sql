@@ -1,17 +1,18 @@
 -- ============================================================================
 -- MICROSERVICIO: inventarios_transferencias
 -- 02. Restricciones (ALTER TABLE / ALTER COLUMN) + claves foráneas INTERNAS
--- Motor: PostgreSQL (Neon)
+-- Motor: PostgreSQL 18 / Neon
 -- ============================================================================
 
--- ---------------------- inventarios ----------------------------------------
+-- ---------------------- inventarios (particionada por id_sede) -------------
 ALTER TABLE inventarios ALTER COLUMN id_sede             SET NOT NULL;
 ALTER TABLE inventarios ALTER COLUMN id_almacen          SET NOT NULL;
 ALTER TABLE inventarios ALTER COLUMN id_producto         SET NOT NULL;
 ALTER TABLE inventarios ALTER COLUMN existencia_actual   SET NOT NULL;
 ALTER TABLE inventarios ALTER COLUMN stock_minimo        SET NOT NULL;
 ALTER TABLE inventarios ALTER COLUMN fecha_actualizacion SET NOT NULL;
-ALTER TABLE inventarios ADD CONSTRAINT pk_inventarios PRIMARY KEY (id_almacen, id_producto);
+-- PostgreSQL exige que la PK de una tabla particionada incluya la clave de partición (id_sede)
+ALTER TABLE inventarios ADD CONSTRAINT pk_inventarios PRIMARY KEY (id_sede, id_almacen, id_producto);
 ALTER TABLE inventarios ADD CONSTRAINT ck_inventarios_existencia CHECK (existencia_actual >= 0);
 ALTER TABLE inventarios ADD CONSTRAINT ck_inventarios_stock_minimo CHECK (stock_minimo >= 0);
 
@@ -24,7 +25,10 @@ ALTER TABLE transferencias ADD CONSTRAINT pk_transferencias PRIMARY KEY (id_tran
 ALTER TABLE transferencias ADD CONSTRAINT ck_transferencias_estado CHECK (estado IN ('Solicitada', 'Despachada', 'Recibida', 'Cancelada'));
 ALTER TABLE transferencias ADD CONSTRAINT ck_transferencias_almacenes CHECK (id_almacen_origen <> id_almacen_destino);
 ALTER TABLE transferencias ADD CONSTRAINT ck_transferencias_fechas
-    CHECK (fecha_despacho >= fecha_solicitud AND fecha_recepcion >= fecha_despacho);
+    CHECK (
+        (fecha_despacho IS NULL OR fecha_despacho >= fecha_solicitud)
+        AND (fecha_recepcion IS NULL OR (fecha_despacho IS NOT NULL AND fecha_recepcion >= fecha_despacho))
+    );
 
 -- ---------------------- detalle_transferencia ------------------------------
 ALTER TABLE detalle_transferencia ALTER COLUMN id_transferencia SET NOT NULL;

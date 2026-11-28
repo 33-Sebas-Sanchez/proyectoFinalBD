@@ -256,14 +256,14 @@
 
 % ---- ventas_pagos ----
 \entity{entV}{pv}{64.5,-37.0}{ventas\_pagos}{pedidos\_venta}
-  {\textit{\fontsize{10.5}{12.5}\selectfont partici\'on planif.: id\_sede}\\
-   \pk{id\_pedido}\\id\_sede\fk\\id\_almacen\fk\\id\_cliente\fk\\id\_empleado\fk\\fecha\_pedido\\estado\\total\_registrado}
+  {\textit{\fontsize{10.5}{12.5}\selectfont partici\'on LIST: id\_sede}\\
+   \pk{id\_sede}\fk\\\pk{id\_pedido}\\id\_almacen\fk\\id\_cliente\fk\\id\_empleado\fk\\fecha\_pedido\\estado\\total\_registrado}
 
 \entity{entV}{dev}{49.0,-54.5}{ventas\_pagos}{devoluciones}
-  {\pk{id\_devolucion}\\id\_pedido\fk\\fecha\_solicitud\\motivo\\estado}
+  {\pk{id\_devolucion}\\id\_sede\fk\\id\_pedido\fk\\fecha\_solicitud\\motivo\\estado}
 
 \entity{entV}{pag}{69.0,-54.5}{ventas\_pagos}{pagos}
-  {\pk{id\_pago}\\id\_pedido\fk\\fecha\_pago\\valor\\medio\_pago\\estado}
+  {\pk{id\_pago}\\id\_sede\fk\\id\_pedido\fk\\fecha\_pago\\valor\\medio\_pago\\estado}
 
 % ====================================================================
 % RELACIONES M:N (ROMBOS con atributos)
@@ -288,7 +288,7 @@
 \node[att]  (b1) at (27.2,-20.9) {existencia\_actual};
 \node[att]  (b2) at (27.2,-25.1) {stock\_minimo};
 \node[att]  (b3) at (40.8,-20.9) {fecha\_actualizacion};
-\node[datt] (b4) at (40.8,-25.1) {id\_sede};
+\node[att]  (b4) at (40.8,-25.1) {\pk{id\_sede}};
 
 % traslada: A2 (almacenes + mantiene + productos) M:N transferencias
 \node[rel] (traslada) at (49.0,-23.0) {traslada};
@@ -490,9 +490,9 @@
   \texttt{vista\_ventas\_mensuales\_por\_sede}& \texttt{ventas\_pagos} (UNION ALL) + \texttt{catalogo\_terceros} &
   \texttt{vista\_saldos\_pendientes}         & \texttt{ventas\_pagos} (pedidos, pagos)\\
   \texttt{vista\_pedidos\_pendientes}        & \texttt{ventas\_pagos} + \texttt{catalogo\_terceros} &
-  \texttt{vista\_reporte\_corporativo}       & todos los esquemas (CTE agregadas)
+  \texttt{vista\_reporte\_corporativo}       & las 5 bases FDW (CTE agregadas)
   \end{tabular}};
-\zone{cRep}{zR}{reportes\enspace·\enspace Reportes Corporativos (10 vistas de solo lectura, sin tablas propias)}{(rep)}
+\zone{cRep}{zR}{reportes\enspace·\enspace Reportes Corporativos (10 vistas obligatorias + 2 UNION ALL de fragmentos, solo lectura)}{(rep)}
 
 % ====================================================================
 % TITULO
@@ -502,14 +502,14 @@
   {Diagrama Entidad--Relaci\'on \mdseries\fontsize{22}{28}\selectfont(notaci\'on de Chen con agregaciones)\\[6pt]
    \fontsize{16}{21}\selectfont\mdseries\color{black!72}
    Sistema de Inventario, Compras y Ventas\enspace·\enspace
-   PostgreSQL con un esquema por microservicio\\[2pt]
+   PostgreSQL con una base independiente por microservicio\\[2pt]
    \fontsize{14}{18}\selectfont\color{black!62}
    15 entidades\enspace·\enspace
    7 relaciones M:N (rombos, tablas asociativas)\enspace·\enspace
-   17 FK directas 1:N\,/\,1:1 (l\'ineas)\enspace·\enspace
+   17 relaciones 1:N\,/\,1:1 (FK locales y ref.\ l\'ogicas)\enspace·\enspace
    3 agregaciones\enspace·\enspace
    22 tablas\enspace·\enspace
-   10 vistas};
+   12 vistas (10 + 2 UNION ALL)};
 
 % ====================================================================
 % LEYENDA
@@ -537,21 +537,19 @@
   Relaci\'on M:N (con \'ovalos de atributos)\\[3pt]
 \tikz[rounded corners=0pt]{\draw[line width=0.95pt,fill=attFill] (.32,.17) ellipse (.32 and .16);}\enspace
   Atributo de relaci\'on M:N\quad
-\tikz[rounded corners=0pt]{\draw[densely dashed, line width=0.95pt,fill=attFill]
-  (.32,.17) ellipse (.32 and .16);}\enspace clave partici\'on\\[3pt]
 \tikz[rounded corners=2.5pt]{%
   \draw[cCat!55, line width=1.2pt, fill=cCat!6]
   (0,0) rectangle (.56,.36);}\enspace
-  Esquema PostgreSQL / microservicio\\[3pt]
+  Base PostgreSQL / microservicio\\[3pt]
 \tikz[rounded corners=2.5pt]{%
   \draw[cVen!85!black, line width=1.8pt, dash pattern=on 5pt off 2.5pt]
   (0,0) rectangle (.56,.36);}\enspace
   Agregaci\'on EER (entidades + relaci\'on tratadas como entidad)\\[7pt]
 % tipos de linea
 \tikz[rounded corners=0pt]{\draw[line width=1.4pt,black!82] (0,.11)--(1.3cm,.11);}\enspace
-  Relaci\'on\,/\,FK dentro del mismo esquema\\[3pt]
+  FK local dentro de la misma base\\[3pt]
 \tikz[rounded corners=0pt]{\draw[densely dashed,line width=1.4pt,black!55] (0,.11)--(1.3cm,.11);}\enspace
-  Relaci\'on\,/\,FK inter-esquema\\[7pt]
+  Referencia l\'ogica inter-servicio (sin FK f\'isica)\\[7pt]
 % claves
 \pk{Atrib.}:\ clave primaria\quad
 atrib.\fk:\ clave for\'anea\quad

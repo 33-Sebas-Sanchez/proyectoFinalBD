@@ -57,6 +57,16 @@ services:
         value: "*"
       - key: JAVA_OPTS
         value: "-XX:MaxRAMPercentage=75"
+      - key: CATALOGO_URL
+        fromService:
+          name: catalogo-service
+          type: web
+          property: host
+      - key: IDENTIDAD_URL
+        fromService:
+          name: identidad-service
+          type: web
+          property: host
 
   - type: web
     name: inventarios-service
@@ -77,6 +87,11 @@ services:
         value: "*"
       - key: JAVA_OPTS
         value: "-XX:MaxRAMPercentage=75"
+      - key: CATALOGO_URL
+        fromService:
+          name: catalogo-service
+          type: web
+          property: host
 
   - type: web
     name: ventas-service
@@ -97,6 +112,16 @@ services:
         value: "*"
       - key: JAVA_OPTS
         value: "-XX:MaxRAMPercentage=75"
+      - key: CATALOGO_URL
+        fromService:
+          name: catalogo-service
+          type: web
+          property: host
+      - key: IDENTIDAD_URL
+        fromService:
+          name: identidad-service
+          type: web
+          property: host
 
   - type: web
     name: identidad-service

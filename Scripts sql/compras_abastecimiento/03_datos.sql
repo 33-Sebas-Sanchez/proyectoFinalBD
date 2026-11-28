@@ -1,12 +1,13 @@
 -- ============================================================================
 -- MICROSERVICIO: compras_abastecimiento
--- 03. Datos de prueba reproducibles
--- Motor: PostgreSQL (Neon)
+-- 03. Datos de prueba reproducibles (rango de 4 meses: ago–nov 2026)
+-- Motor: PostgreSQL 18 / Neon
 -- ----------------------------------------------------------------------------
 -- Volúmenes: Órdenes 75 | Detalle OC 150 | Recepciones ~38 | Detalle recep ~76
--- Referencias lógicas (deben existir en sus servicios):
---   id_proveedor 1..12 ; id_almacen_destino 1..8 ; id_empleado 1..25 ;
+-- Referencias lógicas:
+--   id_proveedor 1..12 ; id_almacen_destino 1..8 ; id_empleado 9..10 (Compras)
 --   id_producto 1..100
+-- Incluye recepciones a tiempo y recepciones con retraso (1..8 días) para Q11.
 -- ============================================================================
 
 TRUNCATE TABLE detalle_recepcion, recepciones_compra,
@@ -19,10 +20,11 @@ SELECT
     g,
     ((g - 1) % 12) + 1,
     ((g - 1) % 8) + 1,
-    ((g - 1) % 25) + 1,
-    DATE '2026-01-05' + (g % 40),
-    DATE '2026-01-05' + (g % 40) + (3 + (g % 10)),
-    (ARRAY['Pendiente','Recibida Parcial','Recibida Total','Cancelada'])[((g - 1) % 4) + 1]
+    -- Jefes de Compras (id_empleado 9 y 10) + soporte Admin (1)
+    CASE WHEN g % 15 = 0 THEN 1 ELSE 9 + (g % 2) END,
+    DATE '2026-07-28' + ((g * 3) % 112),
+    DATE '2026-07-28' + ((g * 3) % 112) + (3 + (g % 10)),
+    (ARRAY['Pendiente','Recibida Parcial','Recibida Total','Cancelada'])[((g - 1 + ((g - 1) / 12) + ((g - 1) / 8)) % 4) + 1]
 FROM generate_series(1, 75) AS g;
 
 -- ---------------------- Detalle orden de compra: 150 -----------------------
@@ -31,7 +33,6 @@ SELECT DISTINCT ON (cand.id_orden_compra, cand.id_producto)
     cand.id_orden_compra,
     cand.id_producto,
     10 + ((cand.id_orden_compra * 7 + cand.id_producto) % 190),
-    -- costo determinístico (no hay acceso a productos de otra base): base + variación
     ((700 + (cand.id_producto * 341) % 34300))::numeric(12,2)
 FROM (
     SELECT oc.id_orden_compra, prod.id_producto
@@ -45,11 +46,16 @@ FROM (
 ORDER BY cand.id_orden_compra, cand.id_producto;
 
 -- ---------------------- Recepciones de compra ------------------------------
+-- ~40% de las órdenes recibidas presentan retraso respecto a fecha_estimada
 INSERT INTO recepciones_compra (id_recepcion, id_orden_compra, fecha_recepcion, estado)
 SELECT
     row_number() OVER (ORDER BY oc.id_orden_compra),
     oc.id_orden_compra,
-    oc.fecha_estimada,
+    CASE
+        WHEN oc.id_proveedor % 3 = 0 OR oc.id_orden_compra % 5 = 0
+            THEN oc.fecha_estimada + (1 + (oc.id_orden_compra % 7))
+        ELSE oc.fecha_estimada - (oc.id_orden_compra % 2)
+    END,
     CASE oc.estado
         WHEN 'Recibida Total'   THEN 'Procesado'
         WHEN 'Recibida Parcial' THEN 'Parcial'
@@ -64,7 +70,7 @@ SELECT
     d.id_producto,
     CASE r.estado
         WHEN 'Procesado' THEN d.cantidad_solicitada
-        ELSE (d.cantidad_solicitada / 2)
+        ELSE GREATEST(d.cantidad_solicitada / 2, 1)
     END
 FROM recepciones_compra r
 JOIN detalle_orden_compra d ON d.id_orden_compra = r.id_orden_compra;

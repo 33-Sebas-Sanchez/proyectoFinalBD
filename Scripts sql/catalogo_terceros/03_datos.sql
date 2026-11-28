@@ -19,7 +19,7 @@ INSERT INTO sedes (id_sede, nombre_sede, ciudad, direccion, tipo_sede, estado) V
     (2, 'Centro Distribución', 'Medellín',     'Carrera 50 # 10-15', 'Distribución', 'Activo'),
     (3, 'Sede Regional Cali',  'Cali',         'Avenida 6 # 25-40',  'Regional',     'Activo'),
     (4, 'Sede Sur Bogotá',     'Bogotá',       'Autopista Sur # 45', 'Ventas',       'Activo'),
-    (5, 'Sede Barranquilla',   'Barranquilla', 'Calle 72 # 50-20',   'Ventas',       'Inactivo');
+    (5, 'Sede Barranquilla',   'Barranquilla', 'Calle 72 # 50-20',   'Ventas',       'Activo');
 
 -- ---------------------- Almacenes: 8 ---------------------------------------
 INSERT INTO almacenes (id_almacen, id_sede, nombre_almacen, tipo_almacen, estado) VALUES
@@ -30,7 +30,7 @@ INSERT INTO almacenes (id_almacen, id_sede, nombre_almacen, tipo_almacen, estado
     (5, 3, 'Tienda Cali',             'Tienda',    'Activo'),
     (6, 3, 'Almacén Principal Cali',  'Principal', 'Activo'),
     (7, 4, 'Tienda Sur',              'Tienda',    'Activo'),
-    (8, 5, 'Tienda Barranquilla',     'Tienda',    'Inactivo');
+    (8, 5, 'Tienda Barranquilla',     'Tienda',    'Activo');
 
 -- ---------------------- Categorías: 6 --------------------------------------
 INSERT INTO categorias (id_categoria, nombre_categoria, descripcion, estado) VALUES

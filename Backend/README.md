@@ -14,9 +14,14 @@ base de datos PostgreSQL en Neon** y no accede a las tablas de los demás.
 | `identidad-service`   | 8085         | identidad y accesos           | `IDENTIDAD`       |
 | `reportes-service`    | 8086         | reportes corporativos         | `REPORTES`        |
 
-`reportes-service` no consulta las bases de los demás: compone la respuesta
-llamando a `GET /api/resumen` de cada servicio. Es el patrón correcto cuando
-cada microservicio es dueño de su base.
+`reportes-service` no escribe en las bases de los demás ni mantiene tablas
+propias: consulta las **12 vistas SQL** integradas mediante `postgres_fdw`
+(`fuente: "postgres_vista"`, conectándose con el usuario de solo lectura
+`usr_reportes_app`) y usa composición HTTP (`/api/resumen` o respaldo cuando
+no hay vistas). Asimismo, `compras-service`, `inventarios-service` y
+`ventas-service` validan las referencias lógicas inter-servicio (`idSede`,
+`idAlmacen`, `idCliente`, `idEmpleado`, `idProveedor`, `idProducto`) mediante
+HTTP contra `catalogo-service` e `identidad-service` antes de persistir.
 
 ## Requisitos
 
@@ -127,7 +132,14 @@ responder.
 
 - **Una base por microservicio**, no un esquema compartido.
 - No hay claves foráneas entre servicios: `id_producto`, `id_cliente`,
-  `id_empleado`, etc. son identificadores que la API valida contra el servicio
-  dueño.
+  `id_empleado`, etc. son referencias lógicas que `ValidadorReferencias`
+  verifica por HTTP contra `catalogo-service` e `identidad-service` en cada
+  operación `POST` (devolviendo `400 Bad Request` si algún ID no existe o si
+  el almacén no corresponde a la sede).
 - Dentro de cada base sí se conservan las claves foráneas internas.
-- `reportes-service` consolida por HTTP, sin acceso cruzado a las bases.
+- `reportes-service` lee las vistas SQL de solo lectura (`postgres_fdw`,
+  usuario `usr_reportes_app`) y compone `/api/reportes/resumen` por HTTP, sin
+  permisos de escritura cruzada.
+- En `inventarios-service` y `ventas-service`, `/api/tablas` y `/api/resumen`
+  descubren tanto la tabla particionada padre (`inventarios`, `pedidos_venta`)
+  como sus cinco particiones físicas por sede (`*_sede_1`..`5`).

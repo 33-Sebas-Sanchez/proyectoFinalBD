@@ -1,0 +1,166 @@
+% !TEX program = xelatex
+% ============================================================================
+% Manual de instalacion y ejecucion (PostgreSQL local, pgAdmin, Neon y Backend)
+% Proyecto Final de Bases de Datos - Inventario, Compras y Ventas
+% ============================================================================
+\documentclass[11pt,oneside]{article}
+
+\usepackage{estilo-proyecto}
+\docnombre{Manual de instalaci\'on y ejecuci\'on}
+
+\addto\captionsspanish{\renewcommand{\contentsname}{Contenido}}
+\setcounter{tocdepth}{2}
+
+\begin{document}
+
+\portadilla{Proyecto final \textperiodcentered{} Bases de datos \textperiodcentered{} Manual t\'ecnico}
+  {Manual de instalaci\'on y ejecuci\'on}
+  {Despliegue local en PostgreSQL (psql / pgAdmin), Neon y microservicios Spring Boot}
+
+\tableofcontents
+\vspace{0.5em}
+
+% ============================================================================
+\section{Requisitos previos}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+  \item \textbf{PostgreSQL 14 o superior} (validado en \textbf{PostgreSQL 18.6})
+        con los binarios \texttt{initdb}, \texttt{pg\_ctl} y \texttt{psql}, m\'as
+        la extensi\'on est\'andar \texttt{postgres\_fdw}.
+  \item \textbf{pgAdmin 4} (opcional) para ejecuci\'on gr\'afica de los
+        scripts SQL y consulta visual de tablas, particiones y vistas.
+  \item \textbf{JDK 25} (opcional, solo para compilar y ejecutar los
+        microservicios de \texttt{Backend/}); Maven Wrapper (\texttt{./mvnw})
+        ya viene incluido.
+\end{itemize}
+
+% ============================================================================
+\section{Organizaci\'on de los scripts SQL}
+
+En la carpeta \texttt{Scripts sql/} cada microservicio tiene su propio
+subdirectorio con cuatro scripts numerados en orden estricto de ejecuci\'on:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.22}
+{\small
+\begin{tabularx}{\linewidth}{@{} >{\ttfamily}p{4.8cm} >{\raggedright\arraybackslash}X @{}}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries Subdirectorio / Archivo} & {\sffamily\bfseries Funci\'on} \\
+\midrule
+catalogo\_terceros/          & 01\_tablas, 02\_constraints, 03\_datos, 04\_seguridad \\
+compras\_abastecimiento/     & 01\_tablas, 02\_constraints, 03\_datos, 04\_seguridad \\
+inventarios\_transferencias/ & 01\_tablas (partici\'on LIST), 02\_constraints, 03\_datos, 04\_seguridad \\
+ventas\_pagos/               & 01\_tablas (partici\'on LIST), 02\_constraints, 03\_datos, 04\_seguridad \\
+identidad\_accesos/          & 01\_tablas, 02\_constraints, 03\_datos, 04\_seguridad \\
+reportes/                    & 01\_fdw\_integracion, 02\_vistas, 03\_consultas\_analiticas, 04\_seguridad, ejecutar\_pruebas.sh \\
+local-db.sh                  & Script automatizado para cl\'uster local en puerto 5433 \\
+\bottomrule
+\end{tabularx}}
+\end{center}
+
+% ============================================================================
+\section{Ejecuci\'on r\'apida en local con \texttt{local-db.sh}}
+
+El proyecto incluye \texttt{Scripts sql/local-db.sh}, que crea un cl\'uster
+PostgreSQL aislado en \texttt{.pgdata/} (puerto \texttt{5433}, usuario
+\texttt{postgres}) para no interferir con otras instalaciones del equipo:
+
+\begin{verbatim}
+cd "Scripts sql"
+./local-db.sh init        # Arranca PostgreSQL (5433), crea las 6 BD y carga todo
+./local-db.sh pruebas     # Ejecuta la matriz de 10 pruebas de verificación
+./local-db.sh consultas   # Ejecuta las 20 consultas analíticas en reportes
+./local-db.sh status      # Consulta estado y lista de bases de datos
+./local-db.sh stop        # Detiene el clúster local
+\end{verbatim}
+
+% ============================================================================
+\section{Instalaci\'on manual paso a paso (\texttt{psql} o pgAdmin)}
+
+Si prefiere usar una instancia existente de PostgreSQL o \textbf{pgAdmin 4},
+siga este orden exacto:
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=4pt]
+  \item \textbf{Crear las seis bases de datos:}
+\begin{verbatim}
+CREATE DATABASE catalogo_terceros ENCODING 'UTF8';
+CREATE DATABASE compras_abastecimiento ENCODING 'UTF8';
+CREATE DATABASE inventarios_transferencias ENCODING 'UTF8';
+CREATE DATABASE ventas_pagos ENCODING 'UTF8';
+CREATE DATABASE identidad_accesos ENCODING 'UTF8';
+CREATE DATABASE reportes ENCODING 'UTF8';
+\end{verbatim}
+
+  \item \textbf{Cargar cada base operacional:} con\'ectese a cada una de las
+        cinco primeras bases (en \texttt{psql -d <base>} o mediante \textit{Query
+        Tool} en pgAdmin) y ejecute en orden:
+        \texttt{01\_tablas.sql} $\to$ \texttt{02\_constraints.sql} $\to$
+        \texttt{03\_datos.sql} $\to$ \texttt{04\_seguridad.sql}.
+        \begin{verbatim}
+for db in catalogo_terceros compras_abastecimiento \
+          inventarios_transferencias ventas_pagos identidad_accesos; do
+  for f in 01_tablas.sql 02_constraints.sql 03_datos.sql 04_seguridad.sql; do
+    psql -h localhost -p 5433 -U postgres -d "$db" -v ON_ERROR_STOP=1 -f "$db/$f"
+  done
+done
+        \end{verbatim}
+
+  \item \textbf{Configurar \texttt{reportes}:} con\'ectese a la base
+        \texttt{reportes} y ejecute:
+        \begin{enumerate}[label=\alph*)]
+          \item \texttt{reportes/01\_fdw\_integracion.sql} (crea servidores
+                \texttt{postgres\_fdw} e importa tablas y particiones).
+          \item \texttt{reportes/02\_vistas.sql} (crea las 10 vistas
+                obligatorias m\'as 2 vistas \texttt{UNION ALL} de fragmentos:
+                12 vistas en total).
+          \item \texttt{reportes/04\_seguridad.sql} (crea roles y permisos de
+                solo lectura, incluida la cuenta de servicio \texttt{usr\_reportes\_app}).
+          \item \texttt{reportes/03\_consultas\_analiticas.sql} (ejecuta las
+                20 consultas numeradas).
+        \end{enumerate}
+\end{enumerate}
+
+% ============================================================================
+\section{Despliegue en la nube (Neon + Render)}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+  \item \textbf{Bases de datos en Neon:} cree un proyecto o base por cada
+        microservicio y ejecute sus scripts \texttt{01}--\texttt{04}. En
+        \texttt{reportes/01\_fdw\_integracion.sql}, sustituya \texttt{host},
+        \texttt{port} (\texttt{5432}), \texttt{dbname} y credenciales de
+        \texttt{CREATE SERVER} / \texttt{USER MAPPING} por los de Neon con
+        \texttt{sslmode=require}.
+  \item \textbf{Microservicios en Render:} el archivo \texttt{render.yaml} en
+        la ra\'iz define los 6 servicios web (\textit{New $\to$ Blueprint}) y
+        solicita \texttt{DB\_URL}, \texttt{DB\_USER} y \texttt{DB\_PASSWORD} de
+        cada base.
+\end{itemize}
+
+% ============================================================================
+\section{Ejecuci\'on local del backend Spring Boot}
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=3pt]
+  \item Copie \texttt{Backend/.env.example} a \texttt{Backend/.env} y ajuste
+        las cadenas JDBC al cl\'uster local (\texttt{localhost:5433}) o a Neon.
+        Para \texttt{reportes-service}, use la cuenta de solo lectura
+        \texttt{usr\_reportes\_app} (\texttt{Reportes\#App\_2026}).
+  \item Levante los seis servicios (puertos \texttt{8081}--\texttt{8086}); en
+        arranque en fr\'io \texttt{run-all.sh} espera autom\'aticamente la
+        apertura de \texttt{/api/health} (hasta $\sim$80\,s):
+\begin{verbatim}
+cd Backend
+./run-all.sh start --build    # Compila JARs y arranca 8081..8086
+./run-all.sh status           # Verifica estado de procesos
+./run-all.sh stop             # Detiene los 6 microservicios
+\end{verbatim}
+  \item Verifique la integraci\'on consultando:
+\begin{verbatim}
+curl http://localhost:8086/api/health
+curl http://localhost:8086/api/reportes/vistas
+curl http://localhost:8086/api/reportes/corporativo
+curl http://localhost:8086/api/reportes/alertas
+\end{verbatim}
+\end{enumerate}
+
+\end{document}

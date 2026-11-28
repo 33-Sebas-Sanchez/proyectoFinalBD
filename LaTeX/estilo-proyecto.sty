@@ -34,10 +34,11 @@
   \setmonofont{JetBrainsMono-Regular}[
     Scale=MatchLowercase,
     BoldFont = JetBrainsMono-Bold,
-    ItalicFont = JetBrainsMono-Italic
+    ItalicFont = JetBrainsMono-Italic,
+    RawFeature = {-calt,-liga}
   ]%
 }{%
-  \setmonofont{JetBrains Mono}[Scale=MatchLowercase]%
+  \setmonofont{JetBrains Mono}[Scale=MatchLowercase,RawFeature={-calt,-liga}]%
 }
 \setmathfont{STIX Two Math}
 
@@ -142,10 +143,10 @@
   \vspace{0.4em}%
 }
 
-% Encabezado de esquema (nivel de seccion)
+% Encabezado de base de datos / microservicio (nivel de seccion)
 % \esquema{nombre}{descripcion}
 \newcommand{\esquema}[2]{%
-  \section[Esquema #1]{Esquema \texttt{#1}}%
+  \section[Base de datos #1]{Base de datos \texttt{#1}}%
   {\sffamily\small\color{gris}#2\par}%
   \vspace{0.2em}%
 }

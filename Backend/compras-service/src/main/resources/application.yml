@@ -29,3 +29,6 @@ management:
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}
+  servicios:
+    catalogo: ${CATALOGO_URL:http://localhost:8081}
+    identidad: ${IDENTIDAD_URL:http://localhost:8085}

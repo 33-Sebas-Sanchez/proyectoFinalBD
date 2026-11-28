@@ -46,6 +46,14 @@ public class CatalogoController {
                 where.params());
     }
 
+    @GetMapping("/sedes/{id}")
+    public Map<String, Object> sedePorId(@PathVariable int id) {
+        return buscarUno(
+                "SELECT id_sede, nombre_sede, ciudad, direccion, tipo_sede, estado FROM sedes WHERE id_sede = ?",
+                "Sede " + id + " no encontrada",
+                id);
+    }
+
     @GetMapping("/almacenes")
     public List<Map<String, Object>> almacenes(
             @RequestParam(required = false) Integer idSede,
@@ -58,6 +66,15 @@ public class CatalogoController {
                         + "FROM almacenes a JOIN sedes s ON s.id_sede = a.id_sede"
                         + where.clausula() + " ORDER BY a.id_almacen",
                 where.params());
+    }
+
+    @GetMapping("/almacenes/{id}")
+    public Map<String, Object> almacenPorId(@PathVariable int id) {
+        return buscarUno(
+                "SELECT a.id_almacen, a.id_sede, s.nombre_sede, a.nombre_almacen, a.tipo_almacen, a.estado "
+                        + "FROM almacenes a JOIN sedes s ON s.id_sede = a.id_sede WHERE a.id_almacen = ?",
+                "Almacén " + id + " no encontrado",
+                id);
     }
 
     @GetMapping("/categorias")
@@ -152,6 +169,15 @@ public class CatalogoController {
                 where.params());
     }
 
+    @GetMapping("/proveedores/{id}")
+    public Map<String, Object> proveedorPorId(@PathVariable int id) {
+        return buscarUno(
+                "SELECT id_proveedor, identificacion_proveedor, razon_social, ciudad_proveedor, "
+                        + "correo_proveedor, telefono_proveedor, estado FROM proveedores WHERE id_proveedor = ?",
+                "Proveedor " + id + " no encontrado",
+                id);
+    }
+
     @GetMapping("/productos/{id}/proveedores")
     public List<Map<String, Object>> proveedoresPorProducto(@PathVariable int id) {
         return jdbc.queryForList(
@@ -174,6 +200,23 @@ public class CatalogoController {
                         + "correo_cliente, telefono_cliente, estado "
                         + "FROM clientes" + where.clausula() + " ORDER BY id_cliente LIMIT ?",
                 where.params(SqlUtils.acotarLimite(limite, LIMITE_MAXIMO)));
+    }
+
+    @GetMapping("/clientes/{id}")
+    public Map<String, Object> clientePorId(@PathVariable int id) {
+        return buscarUno(
+                "SELECT id_cliente, tipo_documento, num_documento, nombre_completo_cliente, "
+                        + "correo_cliente, telefono_cliente, estado FROM clientes WHERE id_cliente = ?",
+                "Cliente " + id + " no encontrado",
+                id);
+    }
+
+    private Map<String, Object> buscarUno(String sql, String mensaje404, Object... args) {
+        List<Map<String, Object>> filas = jdbc.queryForList(sql, args);
+        if (filas.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, mensaje404);
+        }
+        return filas.get(0);
     }
 
     @PostMapping("/clientes")

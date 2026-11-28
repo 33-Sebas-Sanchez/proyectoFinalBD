@@ -2,10 +2,13 @@ package co.udistrital.proyectofinalbd.ventas;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import co.udistrital.proyectofinalbd.common.web.SqlUtils;
 import co.udistrital.proyectofinalbd.common.web.SqlUtils.WhereBuilder;
+import co.udistrital.proyectofinalbd.common.web.ValidadorReferencias;
 
 /**
  * Endpoints REST de pedidos de venta, pagos y devoluciones.
@@ -32,9 +36,19 @@ public class VentasController {
     private static final int LIMITE_MAXIMO = 200;
 
     private final JdbcTemplate jdbc;
+    private final ValidadorReferencias validador;
+    private final String catalogoUrl;
+    private final String identidadUrl;
 
-    public VentasController(JdbcTemplate jdbc) {
+    public VentasController(
+            JdbcTemplate jdbc,
+            ValidadorReferencias validador,
+            @Value("${app.servicios.catalogo}") String catalogoUrl,
+            @Value("${app.servicios.identidad}") String identidadUrl) {
         this.jdbc = jdbc;
+        this.validador = validador;
+        this.catalogoUrl = catalogoUrl;
+        this.identidadUrl = identidadUrl;
     }
 
     @GetMapping("/pedidos")
@@ -49,15 +63,15 @@ public class VentasController {
         where.agregarSiPresente("pv.id_cliente = ?", idCliente);
         return jdbc.queryForList(
                 "WITH pagos_conf AS ("
-                        + "  SELECT id_pedido, COALESCE(SUM(valor), 0) AS pagado "
-                        + "  FROM pagos WHERE estado = 'Confirmado' GROUP BY id_pedido"
+                        + "  SELECT id_sede, id_pedido, COALESCE(SUM(valor), 0) AS pagado "
+                        + "  FROM pagos WHERE estado = 'Confirmado' GROUP BY id_sede, id_pedido"
                         + ") "
                         + "SELECT pv.id_pedido, pv.id_sede, pv.id_almacen, pv.id_cliente, pv.id_empleado, "
                         + "pv.fecha_pedido, pv.estado, pv.total_registrado, "
                         + "COALESCE(pc.pagado, 0) AS total_pagado_confirmado, "
                         + "GREATEST(pv.total_registrado - COALESCE(pc.pagado, 0), 0) AS saldo_pendiente "
                         + "FROM pedidos_venta pv "
-                        + "LEFT JOIN pagos_conf pc ON pc.id_pedido = pv.id_pedido"
+                        + "LEFT JOIN pagos_conf pc ON pc.id_sede = pv.id_sede AND pc.id_pedido = pv.id_pedido"
                         + where.clausula()
                         + " ORDER BY pv.id_pedido DESC LIMIT ?",
                 where.params(SqlUtils.acotarLimite(limite, LIMITE_MAXIMO)));
@@ -101,19 +115,36 @@ public class VentasController {
         if (req.detalles() == null || req.detalles().isEmpty()) {
             throw new IllegalArgumentException("El pedido debe incluir al menos un producto");
         }
+        if (req.idSede() == null || req.idAlmacen() == null || req.idCliente() == null || req.idEmpleado() == null) {
+            throw new IllegalArgumentException("Debe indicar idSede, idAlmacen, idCliente e idEmpleado");
+        }
+
+        validador.validarExiste(catalogoUrl, "/api/sedes/" + req.idSede(),
+                "La sede " + req.idSede() + " no existe en catalogo-service");
+        validador.validarAlmacenEnSede(catalogoUrl, req.idAlmacen(), req.idSede());
+        validador.validarExiste(catalogoUrl, "/api/clientes/" + req.idCliente(),
+                "El cliente " + req.idCliente() + " no existe en catalogo-service");
+        validador.validarExiste(identidadUrl, "/api/empleados/" + req.idEmpleado(),
+                "El empleado " + req.idEmpleado() + " no existe en identidad-service");
+
+        BigDecimal total = BigDecimal.ZERO;
+        Set<Integer> productosValidados = new HashSet<>();
+        for (DetallePedidoRequest linea : req.detalles()) {
+            if (linea.idProducto() == null || linea.cantidad() == null || linea.precioUnitario() == null) {
+                throw new IllegalArgumentException("Cada línea requiere idProducto, cantidad y precioUnitario");
+            }
+            if (productosValidados.add(linea.idProducto())) {
+                validador.validarExiste(catalogoUrl, "/api/productos/" + linea.idProducto(),
+                        "El producto " + linea.idProducto() + " no existe en catalogo-service");
+            }
+            total = total.add(linea.precioUnitario().multiply(BigDecimal.valueOf(linea.cantidad())));
+        }
+
         int id = req.idPedido() != null
                 ? req.idPedido()
                 : SqlUtils.siguienteId(jdbc, "pedidos_venta", "id_pedido");
         LocalDate fecha = req.fechaPedido() != null ? req.fechaPedido() : LocalDate.now();
         String estado = (req.estado() == null || req.estado().isBlank()) ? "Pendiente" : req.estado();
-
-        BigDecimal total = BigDecimal.ZERO;
-        for (DetallePedidoRequest linea : req.detalles()) {
-            if (linea.cantidad() == null || linea.precioUnitario() == null) {
-                throw new IllegalArgumentException("Cada línea requiere cantidad y precioUnitario");
-            }
-            total = total.add(linea.precioUnitario().multiply(BigDecimal.valueOf(linea.cantidad())));
-        }
 
         jdbc.update(
                 "INSERT INTO pedidos_venta (id_pedido, id_sede, id_almacen, id_cliente, id_empleado, "
@@ -123,8 +154,8 @@ public class VentasController {
 
         for (DetallePedidoRequest linea : req.detalles()) {
             jdbc.update(
-                    "INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)",
-                    id, linea.idProducto(), linea.cantidad(), linea.precioUnitario());
+                    "INSERT INTO detalle_pedido (id_sede, id_pedido, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?, ?)",
+                    req.idSede(), id, linea.idProducto(), linea.cantidad(), linea.precioUnitario());
         }
         return pedidoPorId(id);
     }
@@ -147,13 +178,14 @@ public class VentasController {
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
     public Map<String, Object> registrarPago(@RequestBody PagoRequest req) {
-        Integer existe = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM pedidos_venta WHERE id_pedido = ?",
+        List<Integer> sedes = jdbc.queryForList(
+                "SELECT id_sede FROM pedidos_venta WHERE id_pedido = ?",
                 Integer.class, req.idPedido());
-        if (existe == null || existe == 0) {
+        if (sedes.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Pedido " + req.idPedido() + " no encontrado");
         }
+        int idSede = sedes.get(0);
         int id = req.idPago() != null
                 ? req.idPago()
                 : SqlUtils.siguienteId(jdbc, "pagos", "id_pago");
@@ -161,9 +193,9 @@ public class VentasController {
         String estado = (req.estado() == null || req.estado().isBlank()) ? "Confirmado" : req.estado();
 
         jdbc.update(
-                "INSERT INTO pagos (id_pago, id_pedido, fecha_pago, valor, medio_pago, estado) "
-                        + "VALUES (?, ?, ?, ?, ?, ?)",
-                id, req.idPedido(), fecha, req.valor(), req.medioPago(), estado);
+                "INSERT INTO pagos (id_pago, id_sede, id_pedido, fecha_pago, valor, medio_pago, estado) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                id, idSede, req.idPedido(), fecha, req.valor(), req.medioPago(), estado);
         return jdbc.queryForMap(
                 "SELECT id_pago, id_pedido, fecha_pago, valor, medio_pago, estado FROM pagos WHERE id_pago = ?",
                 id);

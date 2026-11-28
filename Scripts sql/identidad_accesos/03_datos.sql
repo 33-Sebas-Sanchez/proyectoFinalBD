@@ -1,10 +1,10 @@
 -- ============================================================================
 -- MICROSERVICIO: identidad_accesos
 -- 03. Datos de prueba reproducibles
--- Motor: PostgreSQL (Neon)
+-- Motor: PostgreSQL 18 / Neon
 -- ----------------------------------------------------------------------------
--- Volúmenes: Empleados 25 | Usuarios 25 | Auditoría 50
--- Distribución de cargos/roles (requerimiento del proyecto):
+-- Volúmenes: Empleados 25 | Usuarios 25 | Auditoría 1500 (propuesta delimitada)
+-- Distribución de cargos/roles:
 --   Administrador 1 | Gerencia 2 | Inventario 5 (uno por sede) | Compras 2
 --   Vendedor 13 | Auditor 2  -> Total 25
 -- NOTA: id_sede referencia lógicamente a catalogo_terceros.sedes (sedes 1..5).
@@ -50,16 +50,21 @@ SELECT
         WHEN 'Auditor'            THEN 'Auditor'
     END,
     e.estado,
-    DATE '2026-01-01' + (e.id_empleado % 60)
+    DATE '2026-07-01' + (e.id_empleado % 25)
 FROM empleados e;
 
--- ---------------------- Auditoría de accesos: 50 ---------------------------
+-- ---------------------- Auditoría de accesos: 1500 -------------------------
 INSERT INTO auditoria_accesos (id_auditoria, id_usuario, fecha_hora, accion, objeto_consultado)
 SELECT
     g,
     ((g - 1) % 25) + 1,
-    DATE '2026-03-01' + (g % 30),
-    (ARRAY['LOGIN','CONSULTA','EXPORTA','ACTUALIZA'])[((g - 1) % 4) + 1],
-    (ARRAY['ventas_pagos.pedidos_venta','compras_abastecimiento.ordenes_compra',
-           'inventarios_transferencias.inventarios','catalogo_terceros.productos'])[((g - 1) % 4) + 1]
-FROM generate_series(1, 50) AS g;
+    TIMESTAMP '2026-07-28 08:00:00' + ((g % 120) * INTERVAL '1 day') + ((g % 10) * INTERVAL '1 hour'),
+    (ARRAY['LOGIN','CONSULTA','EXPORTA','ACTUALIZA','INSERTA'])[((g - 1) % 5) + 1],
+    (ARRAY[
+        'ventas_pagos.pedidos_venta',
+        'compras_abastecimiento.ordenes_compra',
+        'inventarios_transferencias.inventarios',
+        'catalogo_terceros.productos',
+        'reportes.vista_reporte_corporativo'
+    ])[((g - 1) % 5) + 1]
+FROM generate_series(1, 1500) AS g;

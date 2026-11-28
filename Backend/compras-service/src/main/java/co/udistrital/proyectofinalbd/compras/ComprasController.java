@@ -2,10 +2,13 @@ package co.udistrital.proyectofinalbd.compras;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import co.udistrital.proyectofinalbd.common.web.SqlUtils;
 import co.udistrital.proyectofinalbd.common.web.SqlUtils.WhereBuilder;
+import co.udistrital.proyectofinalbd.common.web.ValidadorReferencias;
 
 /**
  * Endpoints REST de órdenes de compra y recepciones para el microservicio de
@@ -33,9 +37,19 @@ public class ComprasController {
     private static final int LIMITE_MAXIMO = 200;
 
     private final JdbcTemplate jdbc;
+    private final ValidadorReferencias validador;
+    private final String catalogoUrl;
+    private final String identidadUrl;
 
-    public ComprasController(JdbcTemplate jdbc) {
+    public ComprasController(
+            JdbcTemplate jdbc,
+            ValidadorReferencias validador,
+            @Value("${app.servicios.catalogo}") String catalogoUrl,
+            @Value("${app.servicios.identidad}") String identidadUrl) {
         this.jdbc = jdbc;
+        this.validador = validador;
+        this.catalogoUrl = catalogoUrl;
+        this.identidadUrl = identidadUrl;
     }
 
     @GetMapping("/ordenes-compra")
@@ -92,6 +106,28 @@ public class ComprasController {
         if (req.detalles() == null || req.detalles().isEmpty()) {
             throw new IllegalArgumentException("La orden de compra debe incluir al menos un producto");
         }
+        if (req.idProveedor() == null || req.idAlmacenDestino() == null || req.idEmpleado() == null) {
+            throw new IllegalArgumentException("Debe indicar idProveedor, idAlmacenDestino e idEmpleado");
+        }
+
+        validador.validarExiste(catalogoUrl, "/api/proveedores/" + req.idProveedor(),
+                "El proveedor " + req.idProveedor() + " no existe en catalogo-service");
+        validador.validarExiste(catalogoUrl, "/api/almacenes/" + req.idAlmacenDestino(),
+                "El almacén destino " + req.idAlmacenDestino() + " no existe en catalogo-service");
+        validador.validarExiste(identidadUrl, "/api/empleados/" + req.idEmpleado(),
+                "El empleado " + req.idEmpleado() + " no existe en identidad-service");
+
+        Set<Integer> productosValidados = new HashSet<>();
+        for (DetalleOrdenRequest linea : req.detalles()) {
+            if (linea.idProducto() == null || linea.cantidadSolicitada() == null || linea.costoUnitario() == null) {
+                throw new IllegalArgumentException("Cada línea requiere idProducto, cantidadSolicitada y costoUnitario");
+            }
+            if (productosValidados.add(linea.idProducto())) {
+                validador.validarExiste(catalogoUrl, "/api/productos/" + linea.idProducto(),
+                        "El producto " + linea.idProducto() + " no existe en catalogo-service");
+            }
+        }
+
         int id = req.idOrdenCompra() != null
                 ? req.idOrdenCompra()
                 : SqlUtils.siguienteId(jdbc, "ordenes_compra", "id_orden_compra");
@@ -128,6 +164,13 @@ public class ComprasController {
         if (existe == null || existe == 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Orden de compra " + req.idOrdenCompra() + " no encontrada");
+        }
+        for (DetalleRecepcionRequest linea : req.detalles()) {
+            if (linea.idProducto() == null || linea.cantidadRecibida() == null) {
+                throw new IllegalArgumentException("Cada línea requiere idProducto y cantidadRecibida");
+            }
+            validador.validarExiste(catalogoUrl, "/api/productos/" + linea.idProducto(),
+                    "El producto " + linea.idProducto() + " no existe en catalogo-service");
         }
 
         int id = req.idRecepcion() != null

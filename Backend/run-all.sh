@@ -83,6 +83,24 @@ arrancar() {
         echo $! > "$pid_file"
         echo "Iniciado $nombre en puerto $puerto (PID $!, log: $log)"
     done
+
+    echo "Esperando apertura de puertos HTTP (en frío puede tardar hasta ~80 s)..."
+    for entrada in "${SERVICIOS[@]}"; do
+        IFS=':' read -r nombre _ puerto <<< "$entrada"
+        local listo=false
+        for _ in $(seq 1 120); do
+            if curl -sf "http://localhost:$puerto/api/health" >/dev/null 2>&1; then
+                listo=true
+                break
+            fi
+            sleep 1
+        done
+        if [[ "$listo" == "true" ]]; then
+            echo "  ✓ $nombre listo en http://localhost:$puerto/api/health"
+        else
+            echo "  ! $nombre aún iniciando; revisa $RUNTIME_DIR/$nombre.log"
+        fi
+    done
 }
 
 detener() {
@@ -110,7 +128,11 @@ estado() {
         IFS=':' read -r nombre _ puerto <<< "$entrada"
         local pid_file="$RUNTIME_DIR/$nombre.pid"
         if [[ -f "$pid_file" ]] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-            echo "$nombre : activo (PID $(cat "$pid_file"), http://localhost:$puerto/api/health)"
+            if curl -sf "http://localhost:$puerto/api/health" >/dev/null 2>&1; then
+                echo "$nombre : activo y respondiendo (PID $(cat "$pid_file"), http://localhost:$puerto/api/health)"
+            else
+                echo "$nombre : iniciando sin puerto HTTP abierto aún (PID $(cat "$pid_file"), puerto $puerto)"
+            fi
         else
             echo "$nombre : detenido"
         fi

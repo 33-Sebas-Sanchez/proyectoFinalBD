@@ -1,0 +1,468 @@
+% !TEX program = xelatex
+% ============================================================================
+% Resultados, analisis de consultas, matriz de pruebas y conclusiones
+% Proyecto Final de Bases de Datos - Inventario, Compras y Ventas (PostgreSQL)
+% Entrega final (4 de 4)
+% ============================================================================
+\documentclass[11pt,oneside]{article}
+
+\usepackage{estilo-proyecto}
+\usepackage{listings}
+\docnombre{Resultados, an\'alisis y pruebas}
+
+\addto\captionsspanish{\renewcommand{\contentsname}{Contenido}}
+\setcounter{tocdepth}{2}
+\setlength{\emergencystretch}{1.6em}
+
+\lstset{
+  language=SQL,
+  basicstyle=\ttfamily\fontsize{7.5}{9.2}\selectfont,
+  keywordstyle=\bfseries\color{acento},
+  commentstyle=\itshape\color{gris},
+  stringstyle=\color{pk},
+  backgroundcolor=\color{fondo},
+  frame=single,
+  rulecolor=\color{linea},
+  breaklines=true,
+  columns=flexible,
+  keepspaces=true,
+  showstringspaces=false,
+  aboveskip=0.4em,
+  belowskip=0.5em
+}
+
+\newcommand{\okbadge}{\textcolor{ok}{\sffamily\bfseries APROBADO}}
+\newcommand{\qitem}[3]{%
+  \par\vspace{0.55em}%
+  \noindent{\sffamily\bfseries\color{acento}#1}\enspace
+  {\footnotesize\ttfamily\color{acento2}[#2]}\par
+  \vspace{0.1em}#3\par}
+
+\begin{document}
+
+\portadilla{Proyecto final \textperiodcentered{} Bases de datos \textperiodcentered{} Entrega final (4 de 4)}
+  {Resultados, an\'alisis y matriz de pruebas}
+  {Distribuci\'on por sede, 12 vistas, 20 consultas anal\'iticas, RBAC, pruebas con SQL y conclusiones}
+
+\tableofcontents
+\vspace{0.4em}
+
+% ============================================================================
+\section{Justificaci\'on de las decisiones de distribuci\'on}
+
+Para satisfacer la separaci\'on de responsabilidades por microservicio y la
+fragmentaci\'on horizontal por sede exigida en el proyecto, se implementaron
+las siguientes decisiones sobre \textbf{PostgreSQL 18.6}:
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=3.5pt]
+  \item \textbf{Seis bases independientes (frente al m\'inimo de una instancia
+        con esquemas):} los cinco microservicios transaccionales
+        (\texttt{catalogo\_terceros}, \texttt{compras\_abastecimiento},
+        \texttt{inventarios\_transferencias}, \texttt{ventas\_pagos},
+        \texttt{identidad\_accesos}) operan en bases separadas sin claves
+        for\'aneas cruzadas entre servicios, con roles aut\'onomos en cada
+        \texttt{04\_seguridad.sql} y validaci\'on de referencias inter-servicio
+        mediante HTTP REST en \texttt{Backend/}. La base \texttt{reportes}
+        consolida la lectura mediante \texttt{postgres\_fdw} usando
+        exclusivamente mapeos de solo lectura (\texttt{usr\_*\_lector} /
+        \texttt{usr\_*\_auditor}).
+  \item \textbf{Particionamiento declarativo \texttt{PARTITION BY LIST (id\_sede)}:}
+        tanto \texttt{inventarios} (140 filas) como \texttt{pedidos\_venta} (350
+        filas) se particionan nativamente por \texttt{id\_sede} en cinco
+        fragmentos f\'isicos disjuntos (\texttt{\_sede\_1} a \texttt{\_sede\_5}),
+        cubriendo el 100\,\% de las sedes. El motor garantiza disjun\-ci\'on
+        y enrutamiento sin duplicar datos.
+  \item \textbf{Claves primarias compuestas y propagaci\'on de \texttt{id\_sede}:}
+        como exige PostgreSQL para particiones nativas, \texttt{id\_sede} integra
+        la clave primaria en \texttt{inventarios} (\texttt{(id\_sede, id\_almacen,
+        id\_producto)}), \texttt{pedidos\_venta} (\texttt{(id\_sede, id\_pedido)})
+        y \texttt{detalle\_pedido} (\texttt{(id\_sede, id\_pedido, id\_producto)}),
+        propag\'andose tambi\'en a \texttt{pagos} y \texttt{devoluciones} para
+        conservar claves for\'aneas locales reales hacia \texttt{pedidos\_venta}.
+  \item \textbf{Reconstrucci\'on expl\'icita mediante \texttt{UNION ALL}:} en
+        \texttt{reportes}, se importan las diez particiones externas y se definen
+        \texttt{vista\_inventarios\_fragmentos\_union} y
+        \texttt{vista\_pedidos\_fragmentos\_union} sobre los cinco fragmentos.
+\end{enumerate}
+
+% ============================================================================
+\section{Vistas SQL implementadas en \texttt{reportes}}
+
+El script \texttt{Scripts sql/reportes/02\_vistas.sql} materializa las diez
+vistas obligatorias del enunciado m\'as las dos vistas expl\'icitas de
+reconstrucci\'on \texttt{UNION ALL} (12 vistas en total, fecha de corte
+cuatrimestral fija \texttt{2026-11-30} para reproducibilidad):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.22}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{} >{\ttfamily}p{5.55cm} >{\sffamily}p{3.6cm} r >{\raggedright\arraybackslash}X @{}}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries Vista (\texttt{reportes.*})} & {\sffamily\bfseries Microservicios fuente} & {\sffamily\bfseries Filas} & {\sffamily\bfseries Prop\'osito y t\'ecnica SQL} \\
+\midrule
+vista\_inventarios\_fragmentos\_union & inventarios (5 frag.) & 140 & Reconstruye particiones por \texttt{UNION ALL}. \\
+vista\_pedidos\_fragmentos\_union & ventas (5 frag.) & 350 & Reconstruye pedidos por \texttt{UNION ALL}. \\
+vista\_inventario\_por\_sede & inventarios + cat\'alogo & 140 & Stock y valorizaci\'on de los 5 fragmentos. \\
+vista\_alertas\_reabastecimiento & inventarios + cat\'alogo & 21 & \texttt{existencia = 0} o bajo m\'inimo. \\
+vista\_productos\_sin\_inventario & cat\'alogo + inventarios & 353 & Pares producto-sede sin stock (\texttt{NOT EXISTS}). \\
+vista\_ventas\_mensuales\_por\_sede & ventas (5 frag.) + cat. & 24 & Serie mensual con \texttt{LAG()}. \\
+vista\_pedidos\_pendientes & ventas + cat. + identidad & 58 & Antig\"uedad al corte \texttt{2026-11-30}. \\
+vista\_saldos\_pendientes & ventas + cat\'alogo & 105 & Saldo positivo descontando abonos. \\
+vista\_compras\_pendientes & compras + cat\'alogo & 76 & \'Ordenes pendientes/parciales vs.\ recep. \\
+vista\_transferencias\_en\_transito & inventarios + cat\'alogo & 7 & Despachadas sin recepci\'on al \texttt{2026-11-30}. \\
+vista\_devoluciones\_por\_producto & ventas + cat\'alogo & 20 & Devoluciones vs.\ ventas (CTEs separadas). \\
+vista\_reporte\_corporativo & 5 bases operacionales & 5 & Consolidado por sede con CTE independientes. \\
+\bottomrule
+\end{tabularx}}
+\end{center}
+
+% ============================================================================
+\section{Resultados e interpretaci\'on de las 20 consultas SQL}
+
+Todas las consultas de \texttt{Scripts sql/reportes/03\_consultas\_analiticas.sql}
+se ejecutaron sin l\'imites artificiales contra el cl\'uster local
+(\texttt{evidencias/\allowbreak resultados\_consultas.txt}), usando la fecha de
+corte fija \texttt{DATE '2026-11-30'} en las consultas dependientes de tiempo:
+
+\qitem{Consulta 01 \textperiodcentered{} Inventario por producto y sede (140 filas)}{UNION ALL + JOIN}{%
+  Integra las 140 filas reconstruidas desde los cinco fragmentos con sedes,
+  almacenes, productos y categor\'ias. La valorizaci\'on refleja desde
+  art\'iculos de alto valor en bodega (p.\,ej.\ \texttt{SKU-00087} en Tienda
+  Norte: 130 uds, \$5\,637\,970.00) hasta quiebres valorizados en \$0.00.}
+
+\qitem{Consulta 02 \textperiodcentered{} Alertas de reabastecimiento (21 filas)}{WHERE + ORDER BY faltante DESC}{%
+  Identifica \textbf{21 alertas} concentradas en Sede Norte Bogot\'a (8), Sede
+  Regional Cali (8) y Sede Sur Bogot\'a (5), incluyendo 6 quiebres totales con
+  existencia cero (\texttt{SKU-00001}, \texttt{SKU-00002}, \texttt{SKU-00045},
+  \texttt{SKU-00046}, \texttt{SKU-00067}, \texttt{SKU-00068}) y faltantes m\'aximos
+  de 28 unidades (\texttt{SKU-00014}, \texttt{SKU-00058}).}
+
+\qitem{Consulta 03 \textperiodcentered{} Productos ausentes por sede (95 filas)}{NOT EXISTS correlacionado + STRING\_AGG}{%
+  Lista los 95 productos activos ausentes en al menos una sede: 7 productos
+  activos (\texttt{SKU-00085} y \texttt{SKU-00094}--\texttt{SKU-00099}) no
+  tienen inventario en ninguna de las 5 sedes.}
+
+\qitem{Consulta 04 \textperiodcentered{} Top 5 productos por sede y periodo (117 filas)}{CTE + DENSE\_RANK()}{%
+  Obtiene el ranking mensual Top 5 de facturaci\'on por sede entre julio y
+  noviembre de 2026. En Sede Norte Bogot\'a lideran \texttt{SKU-00079} en
+  septiembre (\$710\,514.00, 18 uds) y \texttt{SKU-00074} en noviembre
+  (\$629\,646.00, 17 uds).}
+
+\qitem{Consulta 05 \textperiodcentered{} Ventas mensuales y variaci\'on (24 filas)}{CTE + LAG() OVER}{%
+  Muestra la evoluci\'on mensual por sede a lo largo de los cuatro meses:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+{\footnotesize
+\begin{tabular}{@{} l c r r r r @{}}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries Sede} & {\sffamily\bfseries Periodo} & {\sffamily\bfseries Pedidos} & {\sffamily\bfseries Total vendido} & {\sffamily\bfseries Mes anterior} & {\sffamily\bfseries Variaci\'on \%} \\
+\midrule
+Sede Norte Bogot\'a & 2026-08 & 15 & \$5\,567\,891.00 & \$586\,972.00 & +848.58\,\% \\
+Sede Norte Bogot\'a & 2026-09 & 14 & \$5\,201\,854.00 & \$5\,567\,891.00 & -6.57\,\% \\
+Sede Norte Bogot\'a & 2026-10 & 15 & \$4\,118\,090.00 & \$5\,201\,854.00 & -20.83\,\% \\
+Sede Norte Bogot\'a & 2026-11 & 12 & \$4\,380\,869.00 & \$4\,118\,090.00 & +6.38\,\% \\
+Centro Distribuci\'on & 2026-11 & 12 & \$4\,382\,415.00 & \$4\,169\,842.00 & +5.10\,\% \\
+Sede Barranquilla & 2026-11 & 8 & \$2\,884\,628.00 & \$2\,600\,797.00 & +10.91\,\% \\
+\bottomrule
+\end{tabular}}
+\end{center}
+
+\qitem{Consulta 06 \textperiodcentered{} Clientes con compras multisede (80 filas)}{GROUP BY + HAVING COUNT(DISTINCT) >= 2}{%
+  Detecta 80 clientes con pedidos completados en 2, 3 o 4 sedes distintas;
+  lideran \texttt{Cliente 92 Apellido} (4 sedes, \$2\,322\,980.00) y
+  \texttt{Cliente 5 Apellido} (4 sedes, \$2\,092\,161.00).}
+
+\qitem{Consulta 07 \textperiodcentered{} Pedidos con pagos pendientes (105 filas)}{CTE + LEFT JOIN por (id\_sede, id\_pedido)}{%
+  Identifica los 105 pedidos no cancelados con saldo por pagar, diferenciando
+  abonos parciales del 35\,\% en pendientes (p.\,ej.\ pedido 264: saldo
+  \$455\,072.80) y cuotas del 60\,\% en completados (pedido 305: saldo
+  \$136\,843.20).}
+
+\qitem{Consulta 08 \textperiodcentered{} Pedidos con diversidad de productos (210 filas)}{GROUP BY + HAVING COUNT >= 3}{%
+  Lista los 210 pedidos con tres o m\'as productos distintos, encabezados por
+  pedidos de cinco referencias como el pedido 184 (35 uds, \$1\,018\,253.00).}
+
+\qitem{Consulta 09 \textperiodcentered{} Pedidos antiguos sin completar (47 filas)}{Filtro > 30 d\'ias al 2026-11-30}{%
+  Detecta \textbf{47 pedidos} en estado \texttt{'Pendiente'} con antig\"uedad de
+  entre \textbf{31 y 125 d\'ias} respecto al corte \texttt{2026-11-30}
+  (el m\'as antiguo es el pedido 121 del \texttt{2026-07-28} por \$384\,529.00).}
+
+\qitem{Consulta 10 \textperiodcentered{} Demanda frente al inventario (8 filas)}{Subconsulta correlacionada + JOIN}{%
+  Detecta \textbf{8 l\'ineas pendientes} cuya demanda excede las existencias
+  en almac\'en, con d\'eficit entre 9 y 104 unidades (p.\,ej.\ pedido 306 en
+  Tienda Norte: 186 uds solicitadas de \texttt{SKU-00003} frente a 82 en stock).}
+
+\qitem{Consulta 11 \textperiodcentered{} Cumplimiento de proveedores (12 filas)}{CTE + LEFT JOIN}{%
+  Eval\'ua a los \textbf{12 proveedores}. Los proveedores 2, 7 y 11 registran
+  0.00 d\'ias promedio de retraso (100\,\% a tiempo), frente al proveedor 9 con
+  5.33 d\'ias promedio de retraso.}
+
+\qitem{Consulta 12 \textperiodcentered{} Compras pendientes de recibir (76 filas)}{CTE + LEFT JOIN}{%
+  Compara cantidades solicitadas vs.\ recibidas en \'ordenes pendientes y
+  parciales (p.\,ej.\ OC 1 sin recepciones y OC 2 recibida al 50\,\%).}
+
+\qitem{Consulta 13 \textperiodcentered{} Transferencias en tr\'ansito (7 filas)}{JOIN multi-sede + STRING\_AGG}{%
+  Lista \textbf{7 traslados} en estado \texttt{'Despachada'} sin fecha de
+  recepci\'on, con entre \textbf{35 y 108 d\'ias} transcurridos al
+  \texttt{2026-11-30}.}
+
+\qitem{Consulta 14 \textperiodcentered{} Diferencias entre enviado y recibido (4 filas)}{JOIN + comparaci\'on}{%
+  Identifica \textbf{4 l\'ineas} de transferencias recibidas con faltantes de
+  2 a 5 unidades respecto a lo despachado.}
+
+\qitem{Consulta 15 \textperiodcentered{} Redistribuci\'on de productos entre sedes (16 filas)}{CTE excedente vs.\ faltante}{%
+  Encuentra \textbf{16 oportunidades} de traslado interno (p.\,ej.\
+  \texttt{SKU-00046}: 306 uds excedentes en Centro Distribuci\'on frente a
+  20 uds faltantes en Sede Regional Cali).}
+
+\qitem{Consulta 16 \textperiodcentered{} Productos de baja rotaci\'on (8 filas)}{NOT EXISTS 90 d\'ias antes de 2026-11-30}{%
+  Detecta los \textbf{8 productos} (\texttt{SKU-00086}--\texttt{SKU-00093}) con
+  stock entre 50 y 210 unidades y cero ventas confirmadas en los 90 d\'ias
+  previos al corte cuatrimestral.}
+
+\qitem{Consulta 17 \textperiodcentered{} Devoluciones por producto (20 filas) y por categor\'ia (6 filas)}{CTEs separadas 17A y 17B}{%
+  Agrupa por producto (m\'aximo \texttt{SKU-00002} con 6.45\,\%) y consolida
+  por categor\'ia (\textbf{Bebidas} 1.20\,\%, \textbf{Snacks} 1.08\,\%,
+  \textbf{L\'acteos} 0.62\,\%, \textbf{Aseo} 0.51\,\%, \textbf{Abarrotes}
+  0.34\,\%, \textbf{Papeler\'ia} 0.29\,\%).}
+
+\qitem{Consulta 18 \textperiodcentered{} Comparaci\'on de surtido entre sedes (24 / 4 filas)}{EXCEPT e INTERSECT}{%
+  Compara \texttt{inventarios\_sede\_1} y \texttt{inventarios\_sede\_3}:
+  24 productos exclusivos de Sede 1 (\texttt{EXCEPT}) y 4 comunes
+  (\texttt{INTERSECT}: \texttt{SKU-00001}, \texttt{SKU-00002},
+  \texttt{SKU-00011}, \texttt{SKU-00012}).}
+
+\qitem{Consulta 19 \textperiodcentered{} Clasificaci\'on de vendedores por sede (65 filas)}{CTE + RANK() OVER}{%
+  Clasifica a los 13 vendedores dentro de cada una de las 5 sedes (p.\,ej.\
+  \texttt{Empleado 20} en Sede Norte con \$2\,450\,879.00).}
+
+\qitem{Consulta 20 \textperiodcentered{} Consolidado corporativo por sede (5 filas)}{5 CTEs independientes}{%
+  Integra los cinco servicios operacionales sin duplicaci\'on (20\,913 uds en
+  inventario y \$76\,105\,863.00 en ventas completadas):}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.18}
+{\scriptsize
+\begin{tabular}{@{} l r r r r r r r @{}}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries Sede} & {\sffamily\bfseries Prod.\ inv.} & {\sffamily\bfseries Uds.\ inv.} & {\sffamily\bfseries Alertas} & {\sffamily\bfseries Ped.\ comp.} & {\sffamily\bfseries Ped.\ pend.} & {\sffamily\bfseries Ventas comp.} & {\sffamily\bfseries OC / Transf.} \\
+\midrule
+Sede Norte Bogot\'a   & 28 & 3\,091 & 8 & 59 & 14 & \$19\,855\,676.00 & 20 / 8 \\
+Centro Distribuci\'on & 32 & 9\,764 & 0 & 58 & 16 & \$18\,639\,169.00 & 19 / 8 \\
+Sede Regional Cali    & 32 & 3\,777 & 8 & 59 & 14 & \$18\,556\,795.00 & 18 / 8 \\
+Sede Sur Bogot\'a     & 18 & 1\,476 & 5 & 28 &  7 &  \$9\,045\,309.00 &  9 / 3 \\
+Sede Barranquilla     & 17 & 2\,805 & 0 & 29 &  7 & \$10\,008\,914.00 &  9 / 3 \\
+\bottomrule
+\end{tabular}}
+\end{center}
+
+% ============================================================================
+\section{Matriz de pruebas de verificaci\'on (SQL, RBAC e integridad API)}
+
+Ejecutada mediante \texttt{Scripts sql/reportes/ejecutar\_pruebas.sh} y pruebas
+HTTP contra \texttt{Backend/}; cada fila incluye la sentencia SQL o petici\'on
+probada y el resultado real obtenido:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.22}
+{\scriptsize
+\begin{tabularx}{\linewidth}{@{} c >{\raggedright\arraybackslash}p{2.25cm} >{\ttfamily\raggedright\arraybackslash\hyphenpenalty=10000\exhyphenpenalty=10000}p{4.95cm} >{\raggedright\arraybackslash}X c @{}}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries \#} & {\sffamily\bfseries Prueba / Usuario} & {\sffamily\bfseries SQL / Operaci\'on ejecutada} & {\sffamily\bfseries Esperado y obtenido} & {\sffamily\bfseries Estado} \\
+\midrule
+1 & Inserci\'on v\'alida (\texttt{postgres}) &
+  \texttt{BEGIN; INSERT INTO productos VALUES (999,'SKU-99999',...); SELECT ...; ROLLBACK;} &
+  Inserta, consulta fila y revierte sin alterar datos base. & \okbadge \\
+2 & \texttt{SKU} duplicado (\texttt{postgres}) &
+  \texttt{INSERT INTO productos VALUES (998,'SKU-00001',...);} &
+  Rechazado por \texttt{uq\_productos\_sku} (SQLSTATE \texttt{23505}). & \okbadge \\
+3 & Cantidad negativa (\texttt{postgres}) &
+  \texttt{INSERT INTO detalle\_pedido VALUES (1,1,99,-5,1000);} &
+  Rechazado por \texttt{ck\_detalle\_pedido\_cantidad} (SQLSTATE \texttt{23514}). & \okbadge \\
+4 & \texttt{FK} inexistente (\texttt{postgres}) &
+  \texttt{INSERT INTO detalle\_orden\_compra VALUES (99999,1,10,5000);} &
+  Rechazado por \texttt{fk\_detalle\_oc\_orden} (SQLSTATE \texttt{23503}). & \okbadge \\
+5 & Fragmentos y disjun\-ci\'on &
+  \texttt{SELECT COUNT(*) FROM inventarios\_sede\_1; ... sede\_3; INTERSECT} &
+  \texttt{sede\_1}: 33 filas; \texttt{sede\_3}: 36 filas; \texttt{INTERSECT}: 0 filas. & \okbadge \\
+6 & Vista \texttt{UNION ALL} &
+  \texttt{SELECT COUNT(*) FROM reportes.\allowbreak vista\_inventarios\_\allowbreak fragmentos\_union;} &
+  Re\'une 140 filas (5 sedes), igual a \texttt{inventarios}. & \okbadge \\
+7 & CTE + ventana &
+  \texttt{WITH resumen AS (...) SELECT LAG(...), DENSE\_RANK() ...} &
+  Serie mensual por sede y ranking sin errores (12 filas de muestra). & \okbadge \\
+8 & \texttt{EXCEPT/INTERSECT} &
+  \texttt{SELECT id\_producto FROM inv\_sede\_1 EXCEPT/INTERSECT ... sede\_3} &
+  24 exclusivos en sede 1 (\texttt{EXCEPT}) y 4 comunes (\texttt{INTERSECT}). & \okbadge \\
+9a--f & RBAC operativo y lectura &
+  \texttt{usr\_ventas\_vendedor} (\texttt{SELECT}/\texttt{DELETE pagos}); \texttt{usr\_identidad\_auditor} (\texttt{auditoria}/\texttt{usuarios}); \texttt{usr\_inventario\_auditor} (\texttt{UPDATE}); \texttt{usr\_reportes\_gerencia} &
+  Lecturas permitidas (350 pedidos, 1\,500 auditor\'ia, 5 sedes); \texttt{DELETE pagos}, \texttt{SELECT usuarios} y \texttt{UPDATE inventarios} denegados. & \okbadge \\
+9g & Inmutabilidad auditor\'ia (\texttt{usr\_identidad\_admin}) &
+  \texttt{UPDATE auditoria\_accesos SET accion='HACK' ...; DELETE FROM auditoria\_accesos ...;} &
+  Ambos rechazados con \texttt{permission denied for table auditoria\_accesos}. & \okbadge \\
+9h--i & \texttt{reportes} solo lectura (\texttt{usr\_reportes\_app/admin}, \texttt{postgres}) &
+  \texttt{SELECT * FROM vista\_reporte\_corporativo} (\texttt{app}) e \texttt{INSERT INTO ventas\_pagos.\allowbreak pedidos\_venta ...} (\texttt{app} y \texttt{postgres}) &
+  \texttt{usr\_reportes\_app} lee vistas; \texttt{usr\_reportes\_admin} lee FDW (350); escrituras FDW rechazadas con \texttt{permission denied}. & \okbadge \\
+10 & Consolidado sin duplicaci\'on 1:N &
+  \texttt{SELECT SUM(unidades\_inventario), SUM(monto\_ventas\_completadas) FROM vista\_reporte\_corporativo;} &
+  20\,913 uds y \$76\,105\,863.00 id\'enticos a consultas directas. & \okbadge \\
+11 & Validaci\'on REST inter-servicio &
+  \texttt{POST /api/pedidos} (\texttt{idCliente=99999}, \texttt{idAlmacen=7} en sede 1, \texttt{idProducto=99999}) &
+  Todos rechazados con HTTP \texttt{400 Bad Request} por \texttt{ValidadorReferencias}. & \okbadge \\
+\bottomrule
+\end{tabularx}}
+\end{center}
+
+% ============================================================================
+\section{Conclusiones, limitaciones y posibles extensiones}
+
+\subsection{Conclusiones}
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item La separaci\'on en cinco bases operacionales y \texttt{reportes} v\'ia
+        \texttt{postgres\_fdw} con mapeos de solo lectura materializa el
+        aislamiento de microservicios sin sacrificar vistas corporativas exactas.
+  \item El particionamiento \texttt{PARTITION BY LIST (id\_sede)} sobre
+        \texttt{inventarios} y \texttt{pedidos\_venta} garantiza fragmentos
+        f\'isicos disjuntos y claves for\'aneas internas completas mediante la
+        propagaci\'on de \texttt{id\_sede}.
+  \item La validaci\'on REST inter-servicio (\texttt{ValidadorReferencias})
+        impide la creaci\'on de \'ordenes, transferencias o pedidos con
+        identificadores externos inexistentes o almacenes de otra sede.
+\end{itemize}
+
+\subsection{Limitaciones y posibles extensiones}
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item \textbf{Alcance por sede en BD:} siguiendo el enunciado, no se
+        implementan pol\'iticas RLS en PostgreSQL; el filtrado por sede de
+        vendedores y operadores corresponde a la capa de aplicaci\'on.
+  \item \textbf{Validaci\'on en SQL directo:} como las bases son
+        independientes, un \texttt{INSERT} directo por \texttt{psql} saltando
+        la API REST no valida referencias de otra base; en la API s\'i quedan
+        validadas.
+  \item \textbf{Particiones fijas y extensi\'on de autenticaci\'on:} las
+        particiones cubren sedes \texttt{1..5}; como extensi\'on futura se
+        propone partici\'on \texttt{DEFAULT}, hashes BCrypt reales con JWT en
+        \texttt{Backend/} y actualizaci\'on autom\'atica de existencias mediante
+        eventos (\textit{outbox}).
+\end{itemize}
+
+% ============================================================================
+\newpage
+\appendix
+\section{Anexo SQL: vistas de \texttt{reportes} y 20 consultas anal\'iticas}
+
+\subsection{Definici\'on resumida de las 12 vistas (\texttt{02\_vistas.sql})}
+\begin{lstlisting}
+-- Reconstrucción UNION ALL de fragmentos (inventarios y pedidos_venta)
+CREATE OR REPLACE VIEW reportes.vista_inventarios_fragmentos_union AS
+  SELECT 'inventarios_sede_1'::text AS fragmento_origen, * FROM inventarios_transferencias.inventarios_sede_1
+  UNION ALL ... UNION ALL
+  SELECT 'inventarios_sede_5'::text AS fragmento_origen, * FROM inventarios_transferencias.inventarios_sede_5;
+
+CREATE OR REPLACE VIEW reportes.vista_pedidos_fragmentos_union AS
+  SELECT 'pedidos_venta_sede_1'::text AS fragmento_origen, * FROM ventas_pagos.pedidos_venta_sede_1
+  UNION ALL ... UNION ALL
+  SELECT 'pedidos_venta_sede_5'::text AS fragmento_origen, * FROM ventas_pagos.pedidos_venta_sede_5;
+
+-- Las 10 vistas obligatorias operan sobre las tablas y fragmentos FDW:
+-- 1. vista_inventario_por_sede       (vista_inventarios_fragmentos_union + sedes/almacenes/productos)
+-- 2. vista_alertas_reabastecimiento  (WHERE existencia_actual = 0 OR existencia_actual < stock_minimo)
+-- 3. vista_productos_sin_inventario  (CROSS JOIN sedes x productos activos WHERE NOT EXISTS en inventarios)
+-- 4. vista_ventas_mensuales_por_sede (CTE mensual sobre 5 fragmentos UNION ALL + LAG() OVER)
+-- 5. vista_pedidos_pendientes        (vista_pedidos_fragmentos_union WHERE estado='Pendiente', corte 2026-11-30)
+-- 6. vista_saldos_pendientes         (CTE pagos Confirmado GROUP BY (id_sede,id_pedido) + saldo > 0)
+-- 7. vista_compras_pendientes        (CTE recepciones no anuladas vs detalle_orden_compra)
+-- 8. vista_transferencias_en_transito(estado='Despachada' AND fecha_recepcion IS NULL, corte 2026-11-30)
+-- 9. vista_devoluciones_por_producto (CTEs separadas vendido vs devuelto sin duplicación 1:N)
+-- 10. vista_reporte_corporativo      (5 CTEs agregadas por id_sede: inv, ventas, compras, transf, prod)
+\end{lstlisting}
+
+\subsection{Consultas anal\'iticas 01--20 (\texttt{03\_consultas\_analiticas.sql})}
+\begin{lstlisting}
+-- Q01: Inventario por producto y sede (UNION ALL + JOIN)
+SELECT inv.id_sede, s.nombre_sede, a.nombre_almacen, p.sku, p.nombre, c.nombre_categoria,
+       inv.existencia_actual, inv.stock_minimo, ROUND((inv.existencia_actual * p.precio_lista)::numeric, 2)
+FROM reportes.vista_inventarios_fragmentos_union inv
+JOIN catalogo_terceros.sedes s ON s.id_sede = inv.id_sede
+JOIN catalogo_terceros.almacenes a ON a.id_almacen = inv.id_almacen
+JOIN catalogo_terceros.productos p ON p.id_producto = inv.id_producto
+JOIN catalogo_terceros.categorias c ON c.id_categoria = p.id_categoria;
+
+-- Q02: Alertas de reabastecimiento
+SELECT s.nombre_sede, a.nombre_almacen, p.sku, p.nombre, inv.existencia_actual, inv.stock_minimo,
+       (inv.stock_minimo - inv.existencia_actual) AS faltante
+FROM inventarios_transferencias.inventarios inv
+JOIN catalogo_terceros.sedes s ON s.id_sede = inv.id_sede
+JOIN catalogo_terceros.almacenes a ON a.id_almacen = inv.id_almacen
+JOIN catalogo_terceros.productos p ON p.id_producto = inv.id_producto
+WHERE inv.existencia_actual = 0 OR inv.existencia_actual < inv.stock_minimo
+ORDER BY faltante DESC, inv.existencia_actual ASC;
+
+-- Q03: Productos ausentes por sede (NOT EXISTS correlacionado)
+SELECT p.id_producto, p.sku, p.nombre, c.nombre_categoria, COUNT(s.id_sede) AS sedes_sin_registro
+FROM catalogo_terceros.productos p
+JOIN catalogo_terceros.categorias c ON c.id_categoria = p.id_categoria
+CROSS JOIN catalogo_terceros.sedes s
+WHERE p.estado = 'Activo'
+  AND NOT EXISTS (SELECT 1 FROM inventarios_transferencias.inventarios inv
+                  WHERE inv.id_sede = s.id_sede AND inv.id_producto = p.id_producto)
+GROUP BY p.id_producto, p.sku, p.nombre, c.nombre_categoria;
+
+-- Q04: Top 5 productos por sede y periodo (CTE + DENSE_RANK)
+WITH ventas_producto_mes AS (
+  SELECT pv.id_sede, TO_CHAR(pv.fecha_pedido,'YYYY-MM') AS periodo, dp.id_producto,
+         SUM(dp.cantidad) AS uds, SUM(dp.cantidad * dp.precio_unitario) AS importe
+  FROM ventas_pagos.pedidos_venta pv
+  JOIN ventas_pagos.detalle_pedido dp ON dp.id_sede = pv.id_sede AND dp.id_pedido = pv.id_pedido
+  WHERE pv.estado = 'Completado' GROUP BY 1, 2, 3
+), ranking AS (
+  SELECT *, DENSE_RANK() OVER (PARTITION BY id_sede, periodo ORDER BY importe DESC, uds DESC) AS puesto
+  FROM ventas_producto_mes
+) SELECT * FROM ranking WHERE puesto <= 5;
+
+-- Q05: Ventas mensuales y variación contra mes anterior (CTE + LAG)
+WITH vm AS (
+  SELECT id_sede, DATE_TRUNC('month', fecha_pedido)::date AS mes, SUM(total_registrado) AS total
+  FROM ventas_pagos.pedidos_venta WHERE estado = 'Completado' GROUP BY 1, 2
+) SELECT id_sede, mes, total, LAG(total) OVER (PARTITION BY id_sede ORDER BY mes) AS mes_anterior
+FROM vm;
+
+-- Q06: Clientes multisede (HAVING) | Q07: Saldos pendientes (CTE + LEFT JOIN) | Q08: Diversidad >= 3
+SELECT c.id_cliente, COUNT(DISTINCT pv.id_sede) AS sedes_visitadas, SUM(pv.total_registrado)
+FROM ventas_pagos.pedidos_venta pv JOIN catalogo_terceros.clientes c ON c.id_cliente = pv.id_cliente
+WHERE pv.estado = 'Completado' GROUP BY c.id_cliente HAVING COUNT(DISTINCT pv.id_sede) >= 2;
+-- (Q07 agrupa pagos Confirmado por (id_sede, id_pedido); Q08 usa HAVING COUNT(DISTINCT dp.id_producto) >= 3)
+
+-- Q09 (> 30 días al 2026-11-30) | Q10 (Demanda > inventario por subconsulta correlacionada)
+SELECT pv.id_pedido, (DATE '2026-11-30' - pv.fecha_pedido) AS dias FROM ventas_pagos.pedidos_venta pv
+WHERE pv.estado = 'Pendiente' AND (DATE '2026-11-30' - pv.fecha_pedido) > 30;
+SELECT pv.id_pedido, dp.id_producto, dp.cantidad FROM ventas_pagos.pedidos_venta pv
+JOIN ventas_pagos.detalle_pedido dp ON dp.id_sede = pv.id_sede AND dp.id_pedido = pv.id_pedido
+WHERE pv.estado = 'Pendiente' AND dp.cantidad > (
+  SELECT inv.existencia_actual FROM inventarios_transferencias.inventarios inv
+  WHERE inv.id_almacen = pv.id_almacen AND inv.id_producto = dp.id_producto);
+
+-- Q11 (Cumplimiento proveedores CTE + LEFT JOIN) | Q12 (Compras pendientes) | Q13 (Tránsito al 2026-11-30)
+-- Q14 (Diferencias enviado vs recibido) | Q15 (Redistribución excedente vs faltante CTE)
+-- Q16: Baja rotación (90 días previos a 2026-11-30, NOT EXISTS)
+SELECT p.id_producto, p.sku, SUM(inv.existencia_actual) FROM inventarios_transferencias.inventarios inv
+JOIN catalogo_terceros.productos p ON p.id_producto = inv.id_producto
+WHERE inv.existencia_actual > 0 AND NOT EXISTS (
+  SELECT 1 FROM ventas_pagos.detalle_pedido dp JOIN ventas_pagos.pedidos_venta pv
+    ON pv.id_sede = dp.id_sede AND pv.id_pedido = dp.id_pedido
+  WHERE dp.id_producto = inv.id_producto AND pv.estado = 'Completado'
+    AND pv.fecha_pedido >= (DATE '2026-11-30' - INTERVAL '90 days'))
+GROUP BY p.id_producto, p.sku;
+
+-- Q17A/17B (Devoluciones por producto y por categoría con CTEs separadas)
+-- Q18A/18B: Comparación de surtido (EXCEPT e INTERSECT entre inventarios_sede_1 e inventarios_sede_3)
+-- Q19: Clasificación de vendedores por sede (RANK() OVER (PARTITION BY id_sede ORDER BY total DESC))
+-- Q20: SELECT * FROM reportes.vista_reporte_corporativo;
+\end{lstlisting}
+
+\end{document}

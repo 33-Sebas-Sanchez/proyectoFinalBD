@@ -14,10 +14,10 @@ AUXDIR  := .aux
 
 LATEXMK_OPTS := $(ENGINE) -emulate-aux-dir -auxdir=$(AUXDIR) -interaction=nonstopmode
 
-.PHONY: todo limpio planteamiento diagrama_er microservicios diccionario roles dimensiones
+.PHONY: todo limpio planteamiento diagrama_er microservicios diccionario roles dimensiones resultados_pruebas manual_instalacion
 .DEFAULT_GOAL := todo
 
-todo: planteamiento diagrama_er microservicios diccionario roles dimensiones
+todo: planteamiento diagrama_er microservicios diccionario roles dimensiones resultados_pruebas manual_instalacion
 	@echo "Documentos actualizados en $(DESTDIR)/"
 
 planteamiento:
@@ -55,6 +55,18 @@ dimensiones:
 	@cd $(TEXDIR) && $(LATEXMK) $(LATEXMK_OPTS) dimensiones.tex >/dev/null
 	@mkdir -p $(DESTDIR)/Matrices
 	@cp $(TEXDIR)/dimensiones.pdf $(DESTDIR)/Matrices/Modificacion_de_datos_BD.pdf
+
+resultados_pruebas:
+	@echo "→ resultados_pruebas"
+	@cd $(TEXDIR) && $(LATEXMK) $(LATEXMK_OPTS) resultados_pruebas.tex >/dev/null
+	@mkdir -p $(DESTDIR)
+	@cp $(TEXDIR)/resultados_pruebas.pdf $(DESTDIR)/Resultados_y_pruebas_BD.pdf
+
+manual_instalacion:
+	@echo "→ manual_instalacion"
+	@cd $(TEXDIR) && $(LATEXMK) $(LATEXMK_OPTS) manual_instalacion.tex >/dev/null
+	@mkdir -p $(DESTDIR)
+	@cp $(TEXDIR)/manual_instalacion.pdf $(DESTDIR)/Manual_de_instalacion_BD.pdf
 
 limpio:
 	@rm -rf $(TEXDIR)/$(AUXDIR) $(TEXDIR)/*.pdf $(TEXDIR)/*.aux \

@@ -1,6 +1,6 @@
 % !TEX program = xelatex
 % ============================================================================
-% Matriz de permisos por rol y modulo (RBAC)
+% Matriz de permisos por rol y base de datos (RBAC)
 % Proyecto Final de Bases de Datos - Inventario, Compras y Ventas (PostgreSQL)
 % ============================================================================
 \documentclass[11pt,oneside]{article}
@@ -17,6 +17,8 @@
   \textcolor{gris}{\sffamily SELECT}}
 \newcommand{\pSIU}{%
   \textcolor{gris}{\sffamily\bfseries S/I/U}}
+\newcommand{\pSI}{%
+  \textcolor{gris}{\sffamily\bfseries S/I}}
 \newcommand{\pNO}{%
   \textcolor{grisClaro}{\sffamily---}}
 
@@ -24,105 +26,154 @@
 
 \portadilla{Proyecto final \textperiodcentered{} Bases de datos}
   {Matriz de roles y permisos}
-  {Control de acceso basado en roles \textperiodcentered{} PostgreSQL}
+  {Control de acceso basado en roles \textperiodcentered{} Materializaci\'on por base de datos PostgreSQL}
 
-\section{Modelo de acceso}
+\section{Modelo de acceso y alcance}
 
-El sistema aplica \textbf{control de acceso basado en roles} (RBAC) con los
-mecanismos nativos de PostgreSQL. Cada microservicio es un esquema independiente
-y los privilegios se conceden a nivel de esquema y de tabla:
+El sistema implementa \textbf{control de acceso basado en roles (RBAC)} sobre
+\textbf{seis bases de datos PostgreSQL independientes}, una por microservicio.
+Cada base de datos es aut\'onoma en roles y usuarios (\texttt{04\_seguridad.sql}),
+con las siguientes reglas verificadas:
 
-\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
-  \item Cada esquema tiene un \textbf{rol propietario} con privilegios plenos
-        sobre sus tablas y secuencias.
-  \item Los roles de negocio reciben \'unicamente los permisos necesarios para
-        su funci\'on.
-  \item El esquema \texttt{reportes} no posee tablas propias: solo vistas de
-        lectura.
-  \item El rol de auditor\'ia puede leer todos los esquemas, incluida la tabla
-        \texttt{auditoria\_accesos}, sin modificar registros.
+\begin{itemize}[leftmargin=1.5em, itemsep=2.5pt]
+  \item \textbf{Propiedad estricta por servicio:} un rol de un microservicio no
+        posee privilegios sobre las tablas de otro. Las lecturas cruzadas de
+        validaci\'on las realiza la capa REST (\texttt{Backend/}) y la
+        consolidaci\'on anal\'itica se centraliza en \texttt{reportes} v\'ia
+        \texttt{postgres\_fdw} con usuarios mapeados de solo lectura.
+  \item \textbf{Bit\'acora \textit{append-only}:} en
+        \texttt{identidad\_accesos}, se revocan \texttt{UPDATE}, \texttt{DELETE}
+        y \texttt{TRUNCATE} sobre \texttt{auditoria\_accesos} tanto a
+        \texttt{PUBLIC} y \texttt{rol\_identidad\_auditor} como al propio
+        \texttt{rol\_identidad\_admin}. Adicionalmente, se revoca
+        \texttt{SELECT ON usuarios} a \texttt{rol\_identidad\_auditor} para no
+        exponer \texttt{password\_hash}.
+  \item \textbf{Lectura estricta en \texttt{reportes}:}
+        \texttt{usr\_reportes\_app} (cuenta de servicio),
+        \texttt{usr\_reportes\_gerencia}, \texttt{usr\_reportes\_auditor} y
+        \texttt{usr\_reportes\_lector} solo consultan las 12 vistas del esquema
+        \texttt{reportes}, sin acceso directo a los esquemas FDW ni capacidad de
+        escritura remota.
+  \item \textbf{Alcance por sede:} conforme a las exclusiones del enunciado
+        (sin pol\'iticas RLS), el aislamiento de operaciones por \texttt{id\_sede}
+        corresponde a los filtros de aplicaci\'on y no a restricciones por fila
+        en PostgreSQL.
 \end{itemize}
 
-\section{Matriz de permisos}
+\section{Materializaci\'on real por base de datos (\texttt{04\_seguridad.sql})}
 
-\renewcommand{\arraystretch}{1.55}
-{\setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\linewidth}{%
-    >{\sffamily\bfseries\small}p{2.75cm}
-    >{\centering\arraybackslash}X
-    >{\centering\arraybackslash}X
-    >{\centering\arraybackslash}X
-    >{\centering\arraybackslash}X
-    >{\centering\arraybackslash}X
-    >{\centering\arraybackslash}X}
-\toprule
-\rowcolor{fondo}
-  {\sffamily\bfseries\footnotesize Rol} &
-  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{catalogo\_\\terceros}} &
-  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{compras\_\\abastecimiento}} &
-  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{inventarios\_\\transferencias}} &
-  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{ventas\_\\pagos}} &
-  {\ttfamily\fontsize{6.8}{8.5}\selectfont\shortstack{identidad\_\\accesos}} &
-  {\ttfamily\fontsize{6.8}{8.5}\selectfont reportes} \\
-\midrule
-Administrador     & \pALL  & \pALL  & \pALL  & \pALL  & \pALL  & \pALL  \\
-Gerencia          & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  \\
-Resp.\ inventario & \pSEL  & \pSEL  & \pCRUD & \pNO   & \pNO   & \pNO   \\
-Resp.\ compras    & \pSEL  & \pCRUD & \pSEL  & \pNO   & \pNO   & \pSEL  \\
-Vendedor          & \pSEL  & \pNO   & \pSEL  & \pSIU  & \pNO   & \pSEL  \\
-Auditor           & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  & \pSEL  \\
-\bottomrule
-\end{tabularx}}
+La tabla siguiente documenta exactamente los roles y usuarios creados en
+PostgreSQL y verificados en la prueba de permisos:
 
-\vspace{0.3em}
-{\footnotesize\sffamily\color{gris}
-  \textbf{ALL}: todos los privilegios \textperiodcentered{}
-  \textbf{CRUD}: SELECT, INSERT, UPDATE, DELETE \textperiodcentered{}
-  \textbf{S/I/U}: SELECT, INSERT, UPDATE \textperiodcentered{}
-  \textbf{---}: sin acceso.}
-
-\newpage
-\section{Descripci\'on de los roles}
-
+\begin{center}
 \renewcommand{\arraystretch}{1.35}
+{\footnotesize
 \begin{tabularx}{\linewidth}{%
-    >{\sffamily\bfseries\small}p{3.3cm}
-    >{\ttfamily\small}p{3.0cm}
+    >{\ttfamily\scriptsize}p{3.15cm}
+    >{\ttfamily\scriptsize}p{3.05cm}
+    >{\ttfamily\scriptsize}p{2.95cm}
+    >{\centering\arraybackslash}p{1.25cm}
     >{\small\raggedright\arraybackslash}X}
 \toprule
 \rowcolor{fondo}
-{\sffamily\bfseries\footnotesize Rol de negocio} &
-{\sffamily\bfseries\footnotesize Rol de base de datos} &
-{\sffamily\bfseries\footnotesize Responsabilidades} \\
+{\sffamily\bfseries Base de datos} &
+{\sffamily\bfseries Rol PostgreSQL} &
+{\sffamily\bfseries Usuario de login} &
+{\sffamily\bfseries Permiso} &
+{\sffamily\bfseries Restricciones y \texttt{REVOKE} expl\'icitos} \\
 \midrule
-Administrador & rol\_admin
-  & Administraci\'on completa. Es propietario de los esquemas
-    \texttt{identidad\_accesos} y \texttt{catalogo\_terceros}; gestiona usuarios,
-    sedes y par\'ametros del sistema. \\
-Gerencia & rol\_gerencia
-  & Lectura total para supervisi\'on. Consulta los reportes consolidados y
-    no modifica datos operativos. \\
-Resp.\ inventario & rol\_inventario
-  & Gesti\'on de existencias, transferencias entre almacenes y alertas de
-    reabastecimiento. Propietario del esquema \texttt{inventarios\_transferencias}. \\
-Resp.\ compras & rol\_compras
-  & Emisi\'on y seguimiento de \'ordenes de compra y registro de recepciones.
-    Propietario del esquema \texttt{compras\_abastecimiento}. \\
-Vendedor & rol\_vendedor
-  & Creaci\'on de pedidos y registro de pagos. Puede consultar el cat\'alogo
-    y las existencias, pero no modificar otros esquemas. \\
-Auditor & rol\_auditor
-  & Lectura transversal de todos los esquemas y revisi\'on de la bit\'acora
-    de accesos, sin privilegios de escritura. \\
+catalogo\_terceros & rol\_catalogo\_admin & usr\_catalogo\_admin & \pALL &
+  Lectura y escritura sobre las 7 tablas maestras y secuencias. \\
+catalogo\_terceros & rol\_catalogo\_lector & usr\_catalogo\_lector & \pSEL &
+  \texttt{REVOKE INSERT, UPDATE, DELETE}; usado por mapeo FDW. \\
+\midrule
+compras\_abastec. & rol\_compras\_admin & usr\_compras\_admin & \pALL &
+  Administraci\'on completa de \'ordenes y recepciones. \\
+compras\_abastec. & rol\_compras\_operador & usr\_compras\_operador & \pSIU &
+  \texttt{REVOKE DELETE} en todas las tablas de compras. \\
+compras\_abastec. & rol\_compras\_auditor & usr\_compras\_auditor & \pSEL &
+  \texttt{REVOKE INSERT, UPDATE, DELETE}; usado por mapeo FDW. \\
+\midrule
+inventarios\_transf. & rol\_inventario\_admin & usr\_inventario\_admin & \pALL &
+  Administraci\'on de inventarios particionados y traslados. \\
+inventarios\_transf. & rol\_inventario\_operador & usr\_inventario\_operador & \pCRUD &
+  Operaci\'on sobre existencias y transferencias de las sedes. \\
+inventarios\_transf. & rol\_inventario\_auditor & usr\_inventario\_auditor & \pSEL &
+  \texttt{REVOKE INSERT, UPDATE, DELETE}; usado por mapeo FDW. \\
+\midrule
+ventas\_pagos & rol\_ventas\_admin & usr\_ventas\_admin & \pALL &
+  Administraci\'on total de pedidos particionados, pagos y dev. \\
+ventas\_pagos & rol\_ventas\_vendedor & usr\_ventas\_vendedor & \pSIU &
+  \texttt{REVOKE DELETE} en pedidos, pagos y devoluciones. \\
+ventas\_pagos & rol\_ventas\_gerencia & usr\_ventas\_gerencia & \pSEL &
+  \texttt{REVOKE INSERT, UPDATE, DELETE}. \\
+ventas\_pagos & rol\_ventas\_auditor & usr\_ventas\_auditor & \pSEL &
+  \texttt{REVOKE INSERT, UPDATE, DELETE}; usado por mapeo FDW. \\
+\midrule
+identidad\_accesos & rol\_identidad\_admin & usr\_identidad\_admin & \pALL* &
+  \texttt{REVOKE UPDATE, DELETE, TRUNCATE ON auditoria\_accesos}. \\
+identidad\_accesos & rol\_identidad\_auditor & usr\_identidad\_auditor & \pSEL* &
+  Solo \texttt{empleados} y \texttt{auditoria\_accesos}; \texttt{REVOKE SELECT ON usuarios}. \\
+\midrule
+reportes & rol\_reportes\_admin & usr\_reportes\_admin & \pALL/\pSEL &
+  \texttt{CREATE} en \texttt{reportes}; \texttt{SELECT} en esquemas FDW (\texttt{REVOKE} escrituras). \\
+reportes & rol\_reportes\_gerencia & usr\_reportes\_gerencia & \pSEL &
+  Solo lectura sobre vistas de \texttt{reportes}; sin acceso FDW directo. \\
+reportes & rol\_reportes\_auditor & usr\_reportes\_auditor & \pSEL &
+  Solo lectura sobre vistas de \texttt{reportes}; sin acceso FDW directo. \\
+reportes & rol\_reportes\_lector & usr\_reportes\_lector / app & \pSEL &
+  Cuenta de servicio \texttt{usr\_reportes\_app} para \texttt{reportes-service}. \\
 \bottomrule
-\end{tabularx}
+\end{tabularx}}
+\end{center}
 
-\section*{Nota de implementaci\'on}
+\vspace{0.25em}
+{\footnotesize\sffamily\color{gris}
+  \textbf{ALL}: todos los privilegios (\texttt{ALL*}: excepto modificar/borrar \texttt{auditoria\_accesos}) \textperiodcentered{}
+  \textbf{CRUD}: SELECT, INSERT, UPDATE, DELETE \textperiodcentered{}
+  \textbf{S/I/U}: SELECT, INSERT, UPDATE \textperiodcentered{}
+  \textbf{SELECT*}: restringido a tablas no sensibles.}
 
-Los privilegios se materializan con \texttt{GRANT USAGE ON SCHEMA} para habilitar
-el acceso al esquema y con \texttt{GRANT SELECT, INSERT, UPDATE, DELETE ON ALL
-TABLES} para los permisos de tabla. Las secuencias requieren adem\'as
-\texttt{GRANT USAGE, SELECT ON ALL SEQUENCES}. La tabla de auditor\'ia se protege
-revocando \texttt{UPDATE} y \texttt{DELETE} para todos los roles de negocio.
+\newpage
+\section{Correspondencia con los 6 perfiles de negocio (modelo conceptual)}
+
+Para facilitar la lectura funcional respecto a los seis roles definidos en el
+enunciado, el cuadro resume c\'omo se corresponden los perfiles operativos con
+los roles materializados por base de datos:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+{\small
+\begin{tabularx}{\linewidth}{%
+    >{\sffamily\bfseries}p{2.9cm}
+    >{\ttfamily\footnotesize}p{4.3cm}
+    >{\raggedright\arraybackslash}X}
+\toprule
+\rowcolor{fondo}
+{\sffamily\bfseries\footnotesize Perfil de negocio} &
+{\sffamily\bfseries\footnotesize Roles PostgreSQL asociados} &
+{\sffamily\bfseries\footnotesize Alcance funcional e integraci\'on} \\
+\midrule
+Administrador & rol\_*\_admin &
+  Administra esquemas, tablas y usuarios en cada base; en \texttt{identidad\_accesos}
+  no puede alterar ni borrar \texttt{auditoria\_accesos}. \\
+Gerencia & rol\_reportes\_gerencia,\newline rol\_ventas\_gerencia &
+  Consulta las 12 vistas consolidadas en \texttt{reportes} sin permisos de
+  modificaci\'on en ninguna base. \\
+Resp.\ inventario & rol\_inventario\_operador &
+  Gestiona \texttt{inventarios} y \texttt{transferencias}; la consulta al
+  cat\'alogo se realiza v\'ia API REST (\texttt{catalogo-service}). \\
+Resp.\ compras & rol\_compras\_operador &
+  Registra \'ordenes y recepciones (\texttt{S/I/U} sin \texttt{DELETE}); valida
+  proveedores y productos v\'ia \texttt{catalogo-service}. \\
+Vendedor & rol\_ventas\_vendedor &
+  Registra pedidos y pagos (\texttt{S/I/U} sin \texttt{DELETE}); el filtro por
+  sede se aplica en \texttt{ventas-service}. \\
+Auditor & rol\_*\_auditor &
+  Solo \texttt{SELECT} en cada dominio y en vistas de \texttt{reportes}; sin
+  acceso a \texttt{usuarios.password\_hash}. \\
+\bottomrule
+\end{tabularx}}
+\end{center}
 
 \end{document}

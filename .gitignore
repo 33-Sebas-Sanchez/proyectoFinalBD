@@ -18,6 +18,7 @@ LaTeX/*.synctex.gz
 # PDF generados en la carpeta de fuentes (los definitivos van en Documentos/)
 LaTeX/*.pdf
 
-# Sistema
+# Sistema y entorno local
+.pgdata/
 .DS_Store
 Thumbs.db

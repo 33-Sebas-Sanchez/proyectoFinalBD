@@ -27,7 +27,7 @@ CREATE TABLE usuarios (
 CREATE TABLE auditoria_accesos (
     id_auditoria      INT,
     id_usuario        INT,
-    fecha_hora        DATE,
+    fecha_hora        TIMESTAMP,
     accion            VARCHAR(50),
     objeto_consultado VARCHAR(80)
 );

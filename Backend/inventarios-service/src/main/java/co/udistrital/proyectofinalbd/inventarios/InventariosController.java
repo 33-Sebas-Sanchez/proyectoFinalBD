@@ -1,10 +1,13 @@
 package co.udistrital.proyectofinalbd.inventarios;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import co.udistrital.proyectofinalbd.common.web.SqlUtils;
 import co.udistrital.proyectofinalbd.common.web.SqlUtils.WhereBuilder;
+import co.udistrital.proyectofinalbd.common.web.ValidadorReferencias;
 
 /**
  * Endpoints REST de inventarios por sede/almacén, alertas de stock y
@@ -33,9 +37,16 @@ public class InventariosController {
     private static final int LIMITE_MAXIMO = 200;
 
     private final JdbcTemplate jdbc;
+    private final ValidadorReferencias validador;
+    private final String catalogoUrl;
 
-    public InventariosController(JdbcTemplate jdbc) {
+    public InventariosController(
+            JdbcTemplate jdbc,
+            ValidadorReferencias validador,
+            @Value("${app.servicios.catalogo}") String catalogoUrl) {
         this.jdbc = jdbc;
+        this.validador = validador;
+        this.catalogoUrl = catalogoUrl;
     }
 
     @GetMapping("/inventarios")
@@ -134,6 +145,26 @@ public class InventariosController {
         if (req.detalles() == null || req.detalles().isEmpty()) {
             throw new IllegalArgumentException("La transferencia debe incluir al menos un producto");
         }
+        if (req.idAlmacenOrigen() == null || req.idAlmacenDestino() == null) {
+            throw new IllegalArgumentException("Debe indicar idAlmacenOrigen e idAlmacenDestino");
+        }
+
+        validador.validarExiste(catalogoUrl, "/api/almacenes/" + req.idAlmacenOrigen(),
+                "El almacén origen " + req.idAlmacenOrigen() + " no existe en catalogo-service");
+        validador.validarExiste(catalogoUrl, "/api/almacenes/" + req.idAlmacenDestino(),
+                "El almacén destino " + req.idAlmacenDestino() + " no existe en catalogo-service");
+
+        Set<Integer> productosValidados = new HashSet<>();
+        for (DetalleTransferenciaRequest linea : req.detalles()) {
+            if (linea.idProducto() == null || linea.cantidadEnviada() == null) {
+                throw new IllegalArgumentException("Cada línea requiere idProducto y cantidadEnviada");
+            }
+            if (productosValidados.add(linea.idProducto())) {
+                validador.validarExiste(catalogoUrl, "/api/productos/" + linea.idProducto(),
+                        "El producto " + linea.idProducto() + " no existe en catalogo-service");
+            }
+        }
+
         int id = req.idTransferencia() != null
                 ? req.idTransferencia()
                 : SqlUtils.siguienteId(jdbc, "transferencias", "id_transferencia");

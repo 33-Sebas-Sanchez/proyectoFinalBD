@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,6 +50,18 @@ public class IdentidadController {
                 "SELECT id_empleado, id_sede, num_documento, nombre_completo, cargo, correo, estado "
                         + "FROM empleados" + where.clausula() + " ORDER BY id_empleado",
                 where.params());
+    }
+
+    @GetMapping("/empleados/{id}")
+    public Map<String, Object> empleadoPorId(@PathVariable int id) {
+        List<Map<String, Object>> filas = jdbc.queryForList(
+                "SELECT id_empleado, id_sede, num_documento, nombre_completo, cargo, correo, estado "
+                        + "FROM empleados WHERE id_empleado = ?",
+                id);
+        if (filas.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Empleado " + id + " no encontrado");
+        }
+        return filas.get(0);
     }
 
     /**
@@ -119,7 +132,7 @@ public class IdentidadController {
         int idAuditoria = SqlUtils.siguienteId(jdbc, "auditoria_accesos", "id_auditoria");
         jdbc.update(
                 "INSERT INTO auditoria_accesos (id_auditoria, id_usuario, fecha_hora, accion, objeto_consultado) "
-                        + "VALUES (?, ?, CURRENT_DATE, 'LOGIN', 'identidad_accesos.usuarios')",
+                        + "VALUES (?, ?, CURRENT_TIMESTAMP, 'LOGIN', 'identidad_accesos.usuarios')",
                 idAuditoria, idUsuario);
 
         Map<String, Object> sesion = new LinkedHashMap<>();

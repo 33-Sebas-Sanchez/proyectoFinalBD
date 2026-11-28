@@ -1,0 +1,1205 @@
+PostgreSQL local ya está activo vía socket /tmp:5433
+=== CONSULTA 01: Inventario por producto y sede (UNION ALL + JOIN) ===
+ id_sede |     nombre_sede     |     nombre_almacen      |    sku    |  producto   | categoria | existencia_actual | stock_minimo | valorizacion_estimada 
+---------+---------------------+-------------------------+-----------+-------------+-----------+-------------------+--------------+-----------------------
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00086 | Producto 86 | Snacks    |               110 |           38 |            4717020.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00015 | Producto 15 | Aseo      |               153 |           33 |            1270665.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00014 | Producto 14 | Snacks    |               146 |           32 |            1141428.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00013 | Producto 13 | Bebidas   |               139 |           31 |            1019009.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00012 | Producto 12 | Abarrotes |               132 |           30 |             903408.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00011 | Producto 11 | Papelería |               125 |           29 |             794625.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00010 | Producto 10 | Lácteos   |               118 |           28 |             692660.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00009 | Producto 9  | Aseo      |               111 |           27 |             597513.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00008 | Producto 8  | Snacks    |               104 |           26 |             509184.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00007 | Producto 7  | Bebidas   |                97 |           25 |             427673.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00006 | Producto 6  | Abarrotes |                90 |           24 |             352980.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00005 | Producto 5  | Papelería |                10 |           23 |              34350.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00004 | Producto 4  | Lácteos   |                 9 |           22 |              26532.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00003 | Producto 3  | Aseo      |                 8 |           21 |              19688.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00001 | Producto 1  | Bebidas   |                 0 |           19 |                  0.00
+       1 | Sede Norte Bogotá   | Almacén Principal Norte | SKU-00002 | Producto 2  | Snacks    |                 0 |           20 |                  0.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00087 | Producto 87 | Aseo      |               130 |           39 |            5637970.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00021 | Producto 21 | Aseo      |               208 |           39 |            2335216.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00020 | Producto 20 | Snacks    |               201 |           38 |            2158740.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00019 | Producto 19 | Bebidas   |               194 |           37 |            1989082.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00018 | Producto 18 | Abarrotes |               187 |           36 |            1826242.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00017 | Producto 17 | Papelería |               180 |           35 |            1670220.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00013 | Producto 13 | Bebidas   |               152 |           31 |            1114312.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00012 | Producto 12 | Abarrotes |               145 |           30 |             992380.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00026 | Producto 26 | Snacks    |                63 |           22 |             860706.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00025 | Producto 25 | Bebidas   |                56 |           21 |             737800.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00024 | Producto 24 | Abarrotes |                49 |           20 |             621712.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00023 | Producto 23 | Papelería |                42 |           19 |             512442.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00022 | Producto 22 | Lácteos   |                35 |           18 |             409990.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00003 | Producto 3  | Aseo      |                82 |           21 |             201802.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00016 | Producto 16 | Lácteos   |                 6 |           34 |              52752.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00015 | Producto 15 | Aseo      |                 5 |           33 |              41525.00
+       1 | Sede Norte Bogotá   | Tienda Norte            | SKU-00014 | Producto 14 | Snacks    |                 4 |           32 |              31272.00
+       2 | Centro Distribución | Bodega Central          | SKU-00088 | Producto 88 | Lácteos   |               175 |           18 |            7674800.00
+       2 | Centro Distribución | Bodega Central          | SKU-00037 | Producto 37 | Bebidas   |               282 |           33 |            5363358.00
+       2 | Centro Distribución | Bodega Central          | SKU-00036 | Producto 36 | Abarrotes |               279 |           32 |            5170428.00
+       2 | Centro Distribución | Bodega Central          | SKU-00035 | Producto 35 | Papelería |               276 |           31 |            4980420.00
+       2 | Centro Distribución | Bodega Central          | SKU-00034 | Producto 34 | Lácteos   |               273 |           30 |            4793334.00
+       2 | Centro Distribución | Bodega Central          | SKU-00033 | Producto 33 | Aseo      |               270 |           29 |            4609170.00
+       2 | Centro Distribución | Bodega Central          | SKU-00032 | Producto 32 | Snacks    |               267 |           28 |            4427928.00
+       2 | Centro Distribución | Bodega Central          | SKU-00031 | Producto 31 | Bebidas   |               264 |           27 |            4249608.00
+       2 | Centro Distribución | Bodega Central          | SKU-00030 | Producto 30 | Abarrotes |               261 |           26 |            4074210.00
+       2 | Centro Distribución | Bodega Central          | SKU-00029 | Producto 29 | Papelería |               258 |           25 |            3901734.00
+       2 | Centro Distribución | Bodega Central          | SKU-00028 | Producto 28 | Lácteos   |               255 |           24 |            3732180.00
+       2 | Centro Distribución | Bodega Central          | SKU-00027 | Producto 27 | Aseo      |               252 |           23 |            3565548.00
+       2 | Centro Distribución | Bodega Central          | SKU-00026 | Producto 26 | Snacks    |               249 |           22 |            3401838.00
+       2 | Centro Distribución | Bodega Central          | SKU-00025 | Producto 25 | Bebidas   |               246 |           21 |            3241050.00
+       2 | Centro Distribución | Bodega Central          | SKU-00024 | Producto 24 | Abarrotes |               243 |           20 |            3083184.00
+       2 | Centro Distribución | Bodega Central          | SKU-00023 | Producto 23 | Papelería |               240 |           19 |            2928240.00
+       2 | Centro Distribución | Bodega Central          | SKU-00013 | Producto 13 | Bebidas   |               210 |           31 |            1539510.00
+       2 | Centro Distribución | Bodega Central          | SKU-00004 | Producto 4  | Lácteos   |               183 |           22 |             539484.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00089 | Producto 89 | Papelería |               195 |           19 |            8646885.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00048 | Producto 48 | Abarrotes |               332 |           22 |            8092832.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00047 | Producto 47 | Papelería |               329 |           21 |            7859481.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00046 | Producto 46 | Lácteos   |               326 |           20 |            7629052.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00045 | Producto 45 | Aseo      |               323 |           19 |            7401545.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00044 | Producto 44 | Snacks    |               320 |           18 |            7176960.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00043 | Producto 43 | Bebidas   |               317 |           39 |            6955297.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00042 | Producto 42 | Abarrotes |               314 |           38 |            6736556.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00041 | Producto 41 | Papelería |               311 |           37 |            6520737.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00040 | Producto 40 | Lácteos   |               308 |           36 |            6307840.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00039 | Producto 39 | Aseo      |               305 |           35 |            6097865.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00038 | Producto 38 | Snacks    |               302 |           34 |            5890812.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00037 | Producto 37 | Bebidas   |               299 |           33 |            5686681.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00036 | Producto 36 | Abarrotes |               296 |           32 |            5485472.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00035 | Producto 35 | Papelería |               293 |           31 |            5287185.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00034 | Producto 34 | Lácteos   |               290 |           30 |            5091820.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00010 | Producto 10 | Lácteos   |               218 |           28 |            1279660.00
+       2 | Centro Distribución | Bodega Secundaria       | SKU-00005 | Producto 5  | Papelería |               203 |           23 |             697305.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00090 | Producto 90 | Abarrotes |               190 |           20 |            8517700.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00059 | Producto 59 | Papelería |               153 |           33 |            4549149.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00058 | Producto 58 | Lácteos   |               146 |           32 |            4269916.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00057 | Producto 57 | Aseo      |               139 |           31 |            3997501.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00056 | Producto 56 | Snacks    |               132 |           30 |            3731904.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00055 | Producto 55 | Bebidas   |               125 |           29 |            3473125.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00054 | Producto 54 | Abarrotes |               118 |           28 |            3221164.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00053 | Producto 53 | Papelería |               111 |           27 |            2976021.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00052 | Producto 52 | Lácteos   |               104 |           26 |            2737696.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00051 | Producto 51 | Aseo      |                97 |           25 |            2506189.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00050 | Producto 50 | Snacks    |                90 |           24 |            2281500.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00011 | Producto 11 | Papelería |               177 |           29 |            1125189.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00049 | Producto 49 | Bebidas   |                10 |           23 |             248630.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00048 | Producto 48 | Abarrotes |                 9 |           22 |             219384.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00047 | Producto 47 | Papelería |                 8 |           21 |             191112.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00001 | Producto 1  | Bebidas   |               107 |           19 |             159109.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00045 | Producto 45 | Aseo      |                 0 |           19 |                  0.00
+       3 | Sede Regional Cali  | Tienda Cali             | SKU-00046 | Producto 46 | Lácteos   |                 0 |           20 |                  0.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00091 | Producto 91 | Bebidas   |               210 |           21 |            9516570.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00065 | Producto 65 | Papelería |               208 |           39 |            6792240.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00064 | Producto 64 | Lácteos   |               201 |           38 |            6465768.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00063 | Producto 63 | Aseo      |               194 |           37 |            6146114.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00062 | Producto 62 | Snacks    |               187 |           36 |            5833278.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00061 | Producto 61 | Bebidas   |               180 |           35 |            5527260.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00057 | Producto 57 | Aseo      |               152 |           31 |            4371368.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00056 | Producto 56 | Snacks    |               145 |           30 |            4099440.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00070 | Producto 70 | Lácteos   |                63 |           22 |            2210670.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00069 | Producto 69 | Aseo      |                56 |           21 |            1937768.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00068 | Producto 68 | Snacks    |                49 |           20 |            1671684.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00067 | Producto 67 | Bebidas   |                42 |           19 |            1412418.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00012 | Producto 12 | Abarrotes |               197 |           30 |            1348268.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00066 | Producto 66 | Abarrotes |                35 |           18 |            1159970.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00002 | Producto 2  | Snacks    |               127 |           20 |             250698.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00060 | Producto 60 | Abarrotes |                 6 |           34 |             181320.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00059 | Producto 59 | Papelería |                 5 |           33 |             148665.00
+       3 | Sede Regional Cali  | Almacén Principal Cali  | SKU-00058 | Producto 58 | Lácteos   |                 4 |           32 |             116984.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00081 | Producto 81 | Aseo      |               153 |           33 |            6188391.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00080 | Producto 80 | Snacks    |               146 |           32 |            5834160.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00079 | Producto 79 | Bebidas   |               139 |           31 |            5486747.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00078 | Producto 78 | Abarrotes |               132 |           30 |            5146152.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00077 | Producto 77 | Papelería |               125 |           29 |            4812375.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00076 | Producto 76 | Lácteos   |               118 |           28 |            4485416.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00075 | Producto 75 | Aseo      |               111 |           27 |            4165275.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00074 | Producto 74 | Snacks    |               104 |           26 |            3851952.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00073 | Producto 73 | Bebidas   |                97 |           25 |            3545447.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00072 | Producto 72 | Abarrotes |                90 |           24 |            3245760.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00092 | Producto 92 | Snacks    |                50 |           22 |            2290200.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00003 | Producto 3  | Aseo      |               147 |           21 |             361767.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00071 | Producto 71 | Papelería |                10 |           23 |             355770.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00070 | Producto 70 | Lácteos   |                 9 |           22 |             315810.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00069 | Producto 69 | Aseo      |                 8 |           21 |             276824.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00013 | Producto 13 | Bebidas   |                37 |           31 |             271247.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00067 | Producto 67 | Bebidas   |                 0 |           19 |                  0.00
+       4 | Sede Sur Bogotá     | Tienda Sur              | SKU-00068 | Producto 68 | Snacks    |                 0 |           20 |                  0.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00084 | Producto 84 | Abarrotes |               187 |           36 |            7836796.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00083 | Producto 83 | Papelería |               180 |           35 |            7455780.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00082 | Producto 82 | Lácteos   |               173 |           34 |            7081582.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00081 | Producto 81 | Aseo      |               166 |           33 |            6714202.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00080 | Producto 80 | Snacks    |               159 |           32 |            6353640.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00079 | Producto 79 | Bebidas   |               152 |           31 |            5999896.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00078 | Producto 78 | Abarrotes |               145 |           30 |            5652970.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00093 | Producto 93 | Aseo      |                70 |           23 |            3240370.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00010 | Producto 10 | Lácteos   |               209 |           28 |            1226830.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00008 | Producto 8  | Snacks    |               195 |           26 |             954720.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00007 | Producto 7  | Bebidas   |               188 |           25 |             828892.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00006 | Producto 6  | Abarrotes |               181 |           24 |             709882.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00005 | Producto 5  | Papelería |               174 |           23 |             597690.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00004 | Producto 4  | Lácteos   |               167 |           22 |             492316.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00003 | Producto 3  | Aseo      |               160 |           21 |             393760.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00002 | Producto 2  | Snacks    |               153 |           20 |             302022.00
+       5 | Sede Barranquilla   | Tienda Barranquilla     | SKU-00001 | Producto 1  | Bebidas   |               146 |           19 |             217102.00
+(140 rows)
+
+=== CONSULTA 02: Alertas de reabastecimiento ===
+    nombre_sede     |     nombre_almacen      |    sku    |  producto   | existencia_actual | stock_minimo | faltante 
+--------------------+-------------------------+-----------+-------------+-------------------+--------------+----------
+ Sede Norte Bogotá  | Tienda Norte            | SKU-00014 | Producto 14 |                 4 |           32 |       28
+ Sede Regional Cali | Almacén Principal Cali  | SKU-00058 | Producto 58 |                 4 |           32 |       28
+ Sede Norte Bogotá  | Tienda Norte            | SKU-00015 | Producto 15 |                 5 |           33 |       28
+ Sede Regional Cali | Almacén Principal Cali  | SKU-00059 | Producto 59 |                 5 |           33 |       28
+ Sede Norte Bogotá  | Tienda Norte            | SKU-00016 | Producto 16 |                 6 |           34 |       28
+ Sede Regional Cali | Almacén Principal Cali  | SKU-00060 | Producto 60 |                 6 |           34 |       28
+ Sede Norte Bogotá  | Almacén Principal Norte | SKU-00002 | Producto 2  |                 0 |           20 |       20
+ Sede Regional Cali | Tienda Cali             | SKU-00046 | Producto 46 |                 0 |           20 |       20
+ Sede Sur Bogotá    | Tienda Sur              | SKU-00068 | Producto 68 |                 0 |           20 |       20
+ Sede Norte Bogotá  | Almacén Principal Norte | SKU-00001 | Producto 1  |                 0 |           19 |       19
+ Sede Regional Cali | Tienda Cali             | SKU-00045 | Producto 45 |                 0 |           19 |       19
+ Sede Sur Bogotá    | Tienda Sur              | SKU-00067 | Producto 67 |                 0 |           19 |       19
+ Sede Norte Bogotá  | Almacén Principal Norte | SKU-00003 | Producto 3  |                 8 |           21 |       13
+ Sede Regional Cali | Tienda Cali             | SKU-00047 | Producto 47 |                 8 |           21 |       13
+ Sede Sur Bogotá    | Tienda Sur              | SKU-00069 | Producto 69 |                 8 |           21 |       13
+ Sede Norte Bogotá  | Almacén Principal Norte | SKU-00004 | Producto 4  |                 9 |           22 |       13
+ Sede Regional Cali | Tienda Cali             | SKU-00048 | Producto 48 |                 9 |           22 |       13
+ Sede Sur Bogotá    | Tienda Sur              | SKU-00070 | Producto 70 |                 9 |           22 |       13
+ Sede Norte Bogotá  | Almacén Principal Norte | SKU-00005 | Producto 5  |                10 |           23 |       13
+ Sede Regional Cali | Tienda Cali             | SKU-00049 | Producto 49 |                10 |           23 |       13
+ Sede Sur Bogotá    | Tienda Sur              | SKU-00071 | Producto 71 |                10 |           23 |       13
+(21 rows)
+
+=== CONSULTA 03: Productos ausentes por sede (NOT EXISTS correlacionado) ===
+ id_producto |    sku    |  producto   | nombre_categoria | sedes_sin_registro |                                         sedes_ausentes                                         
+-------------+-----------+-------------+------------------+--------------------+------------------------------------------------------------------------------------------------
+          85 | SKU-00085 | Producto 85 | Bebidas          |                  5 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          94 | SKU-00094 | Producto 94 | Lácteos          |                  5 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          95 | SKU-00095 | Producto 95 | Papelería        |                  5 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          96 | SKU-00096 | Producto 96 | Abarrotes        |                  5 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          97 | SKU-00097 | Producto 97 | Bebidas          |                  5 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          98 | SKU-00098 | Producto 98 | Snacks           |                  5 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          99 | SKU-00099 | Producto 99 | Aseo             |                  5 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+           9 | SKU-00009 | Producto 9  | Aseo             |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          14 | SKU-00014 | Producto 14 | Snacks           |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          15 | SKU-00015 | Producto 15 | Aseo             |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          16 | SKU-00016 | Producto 16 | Lácteos          |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          17 | SKU-00017 | Producto 17 | Papelería        |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          18 | SKU-00018 | Producto 18 | Abarrotes        |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          19 | SKU-00019 | Producto 19 | Bebidas          |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          21 | SKU-00021 | Producto 21 | Aseo             |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          22 | SKU-00022 | Producto 22 | Lácteos          |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          27 | SKU-00027 | Producto 27 | Aseo             |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          28 | SKU-00028 | Producto 28 | Lácteos          |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          29 | SKU-00029 | Producto 29 | Papelería        |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          30 | SKU-00030 | Producto 30 | Abarrotes        |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          31 | SKU-00031 | Producto 31 | Bebidas          |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          32 | SKU-00032 | Producto 32 | Snacks           |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          33 | SKU-00033 | Producto 33 | Aseo             |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          34 | SKU-00034 | Producto 34 | Lácteos          |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          35 | SKU-00035 | Producto 35 | Papelería        |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          36 | SKU-00036 | Producto 36 | Abarrotes        |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          37 | SKU-00037 | Producto 37 | Bebidas          |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          38 | SKU-00038 | Producto 38 | Snacks           |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          39 | SKU-00039 | Producto 39 | Aseo             |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          41 | SKU-00041 | Producto 41 | Papelería        |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          42 | SKU-00042 | Producto 42 | Abarrotes        |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          43 | SKU-00043 | Producto 43 | Bebidas          |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          44 | SKU-00044 | Producto 44 | Snacks           |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          49 | SKU-00049 | Producto 49 | Bebidas          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          50 | SKU-00050 | Producto 50 | Snacks           |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          51 | SKU-00051 | Producto 51 | Aseo             |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          52 | SKU-00052 | Producto 52 | Lácteos          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          53 | SKU-00053 | Producto 53 | Papelería        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          54 | SKU-00054 | Producto 54 | Abarrotes        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          55 | SKU-00055 | Producto 55 | Bebidas          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          56 | SKU-00056 | Producto 56 | Snacks           |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          57 | SKU-00057 | Producto 57 | Aseo             |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          58 | SKU-00058 | Producto 58 | Lácteos          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          59 | SKU-00059 | Producto 59 | Papelería        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          61 | SKU-00061 | Producto 61 | Bebidas          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          62 | SKU-00062 | Producto 62 | Snacks           |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          63 | SKU-00063 | Producto 63 | Aseo             |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          64 | SKU-00064 | Producto 64 | Lácteos          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          65 | SKU-00065 | Producto 65 | Papelería        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          66 | SKU-00066 | Producto 66 | Abarrotes        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          71 | SKU-00071 | Producto 71 | Papelería        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Barranquilla
+          72 | SKU-00072 | Producto 72 | Abarrotes        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Barranquilla
+          73 | SKU-00073 | Producto 73 | Bebidas          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Barranquilla
+          74 | SKU-00074 | Producto 74 | Snacks           |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Barranquilla
+          75 | SKU-00075 | Producto 75 | Aseo             |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Barranquilla
+          76 | SKU-00076 | Producto 76 | Lácteos          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Barranquilla
+          77 | SKU-00077 | Producto 77 | Papelería        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Barranquilla
+          82 | SKU-00082 | Producto 82 | Lácteos          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá
+          83 | SKU-00083 | Producto 83 | Papelería        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá
+          84 | SKU-00084 | Producto 84 | Abarrotes        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá
+          86 | SKU-00086 | Producto 86 | Snacks           |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          87 | SKU-00087 | Producto 87 | Aseo             |                  4 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          88 | SKU-00088 | Producto 88 | Lácteos          |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          89 | SKU-00089 | Producto 89 | Papelería        |                  4 | Sede Norte Bogotá, Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          90 | SKU-00090 | Producto 90 | Abarrotes        |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          91 | SKU-00091 | Producto 91 | Bebidas          |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          92 | SKU-00092 | Producto 92 | Snacks           |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Barranquilla
+          93 | SKU-00093 | Producto 93 | Aseo             |                  4 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali, Sede Sur Bogotá
+           6 | SKU-00006 | Producto 6  | Abarrotes        |                  3 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá
+           7 | SKU-00007 | Producto 7  | Bebidas          |                  3 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá
+           8 | SKU-00008 | Producto 8  | Snacks           |                  3 | Centro Distribución, Sede Regional Cali, Sede Sur Bogotá
+          11 | SKU-00011 | Producto 11 | Papelería        |                  3 | Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          12 | SKU-00012 | Producto 12 | Abarrotes        |                  3 | Centro Distribución, Sede Sur Bogotá, Sede Barranquilla
+          23 | SKU-00023 | Producto 23 | Papelería        |                  3 | Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          24 | SKU-00024 | Producto 24 | Abarrotes        |                  3 | Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          25 | SKU-00025 | Producto 25 | Bebidas          |                  3 | Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          26 | SKU-00026 | Producto 26 | Snacks           |                  3 | Sede Regional Cali, Sede Sur Bogotá, Sede Barranquilla
+          45 | SKU-00045 | Producto 45 | Aseo             |                  3 | Sede Norte Bogotá, Sede Sur Bogotá, Sede Barranquilla
+          46 | SKU-00046 | Producto 46 | Lácteos          |                  3 | Sede Norte Bogotá, Sede Sur Bogotá, Sede Barranquilla
+          47 | SKU-00047 | Producto 47 | Papelería        |                  3 | Sede Norte Bogotá, Sede Sur Bogotá, Sede Barranquilla
+          48 | SKU-00048 | Producto 48 | Abarrotes        |                  3 | Sede Norte Bogotá, Sede Sur Bogotá, Sede Barranquilla
+          67 | SKU-00067 | Producto 67 | Bebidas          |                  3 | Sede Norte Bogotá, Centro Distribución, Sede Barranquilla
+          68 | SKU-00068 | Producto 68 | Snacks           |                  3 | Sede Norte Bogotá, Centro Distribución, Sede Barranquilla
+          69 | SKU-00069 | Producto 69 | Aseo             |                  3 | Sede Norte Bogotá, Centro Distribución, Sede Barranquilla
+          70 | SKU-00070 | Producto 70 | Lácteos          |                  3 | Sede Norte Bogotá, Centro Distribución, Sede Barranquilla
+          78 | SKU-00078 | Producto 78 | Abarrotes        |                  3 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali
+          79 | SKU-00079 | Producto 79 | Bebidas          |                  3 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali
+          81 | SKU-00081 | Producto 81 | Aseo             |                  3 | Sede Norte Bogotá, Centro Distribución, Sede Regional Cali
+           1 | SKU-00001 | Producto 1  | Bebidas          |                  2 | Centro Distribución, Sede Sur Bogotá
+           2 | SKU-00002 | Producto 2  | Snacks           |                  2 | Centro Distribución, Sede Sur Bogotá
+           3 | SKU-00003 | Producto 3  | Aseo             |                  2 | Centro Distribución, Sede Regional Cali
+           4 | SKU-00004 | Producto 4  | Lácteos          |                  2 | Sede Regional Cali, Sede Sur Bogotá
+           5 | SKU-00005 | Producto 5  | Papelería        |                  2 | Sede Regional Cali, Sede Sur Bogotá
+          10 | SKU-00010 | Producto 10 | Lácteos          |                  2 | Sede Regional Cali, Sede Sur Bogotá
+          13 | SKU-00013 | Producto 13 | Bebidas          |                  2 | Sede Regional Cali, Sede Barranquilla
+(95 rows)
+
+=== CONSULTA 04: Ranking Top 5 productos por sede y periodo (CTE + DENSE_RANK) ===
+ id_sede |     nombre_sede     | periodo | puesto |    sku    |  producto   | unidades_vendidas | importe_vendido 
+---------+---------------------+---------+--------+-----------+-------------+-------------------+-----------------
+       1 | Sede Norte Bogotá   | 2026-07 |      1 | SKU-00055 | Producto 55 |                 9 |       250065.00
+       1 | Sede Norte Bogotá   | 2026-07 |      2 | SKU-00060 | Producto 60 |                 6 |       181320.00
+       1 | Sede Norte Bogotá   | 2026-07 |      3 | SKU-00031 | Producto 31 |                 5 |        80485.00
+       1 | Sede Norte Bogotá   | 2026-07 |      4 | SKU-00084 | Producto 84 |                 1 |        41908.00
+       1 | Sede Norte Bogotá   | 2026-07 |      5 | SKU-00029 | Producto 29 |                 2 |        30246.00
+       1 | Sede Norte Bogotá   | 2026-08 |      1 | SKU-00067 | Producto 67 |                17 |       571693.00
+       1 | Sede Norte Bogotá   | 2026-08 |      2 | SKU-00064 | Producto 64 |                13 |       418184.00
+       1 | Sede Norte Bogotá   | 2026-08 |      3 | SKU-00082 | Producto 82 |                 9 |       368406.00
+       1 | Sede Norte Bogotá   | 2026-08 |      4 | SKU-00058 | Producto 58 |                11 |       321706.00
+       1 | Sede Norte Bogotá   | 2026-08 |      5 | SKU-00084 | Producto 84 |                 7 |       293356.00
+       1 | Sede Norte Bogotá   | 2026-09 |      1 | SKU-00079 | Producto 79 |                18 |       710514.00
+       1 | Sede Norte Bogotá   | 2026-09 |      2 | SKU-00060 | Producto 60 |                14 |       423080.00
+       1 | Sede Norte Bogotá   | 2026-09 |      3 | SKU-00084 | Producto 84 |                 8 |       335264.00
+       1 | Sede Norte Bogotá   | 2026-09 |      4 | SKU-00055 | Producto 55 |                12 |       333420.00
+       1 | Sede Norte Bogotá   | 2026-09 |      5 | SKU-00064 | Producto 64 |                 9 |       289512.00
+       1 | Sede Norte Bogotá   | 2026-10 |      1 | SKU-00076 | Producto 76 |                10 |       380120.00
+       1 | Sede Norte Bogotá   | 2026-10 |      2 | SKU-00043 | Producto 43 |                17 |       372997.00
+       1 | Sede Norte Bogotá   | 2026-10 |      3 | SKU-00072 | Producto 72 |                10 |       360640.00
+       1 | Sede Norte Bogotá   | 2026-10 |      4 | SKU-00069 | Producto 69 |                 8 |       276824.00
+       1 | Sede Norte Bogotá   | 2026-10 |      5 | SKU-00077 | Producto 77 |                 7 |       269493.00
+       1 | Sede Norte Bogotá   | 2026-11 |      1 | SKU-00074 | Producto 74 |                17 |       629646.00
+       1 | Sede Norte Bogotá   | 2026-11 |      2 | SKU-00067 | Producto 67 |                18 |       605322.00
+       1 | Sede Norte Bogotá   | 2026-11 |      3 | SKU-00045 | Producto 45 |                15 |       343725.00
+       1 | Sede Norte Bogotá   | 2026-11 |      4 | SKU-00070 | Producto 70 |                 8 |       280720.00
+       1 | Sede Norte Bogotá   | 2026-11 |      5 | SKU-00052 | Producto 52 |                 9 |       236916.00
+       2 | Centro Distribución | 2026-07 |      1 | SKU-00078 | Producto 78 |                 5 |       194930.00
+       2 | Centro Distribución | 2026-07 |      2 | SKU-00049 | Producto 49 |                 4 |        99452.00
+       2 | Centro Distribución | 2026-08 |      1 | SKU-00082 | Producto 82 |                12 |       491208.00
+       2 | Centro Distribución | 2026-08 |      2 | SKU-00061 | Producto 61 |                12 |       368484.00
+       2 | Centro Distribución | 2026-08 |      3 | SKU-00073 | Producto 73 |                10 |       365510.00
+       2 | Centro Distribución | 2026-08 |      4 | SKU-00086 | Producto 86 |                 8 |       343056.00
+       2 | Centro Distribución | 2026-08 |      5 | SKU-00078 | Producto 78 |                 7 |       272902.00
+       2 | Centro Distribución | 2026-09 |      1 | SKU-00075 | Producto 75 |                17 |       637925.00
+       2 | Centro Distribución | 2026-09 |      2 | SKU-00046 | Producto 46 |                15 |       351030.00
+       2 | Centro Distribución | 2026-09 |      3 | SKU-00073 | Producto 73 |                 8 |       292408.00
+       2 | Centro Distribución | 2026-09 |      4 | SKU-00071 | Producto 71 |                 8 |       284616.00
+       2 | Centro Distribución | 2026-09 |      5 | SKU-00080 | Producto 80 |                 6 |       239760.00
+       2 | Centro Distribución | 2026-10 |      1 | SKU-00081 | Producto 81 |                 9 |       364023.00
+       2 | Centro Distribución | 2026-10 |      2 | SKU-00049 | Producto 49 |                14 |       348082.00
+       2 | Centro Distribución | 2026-10 |      3 | SKU-00078 | Producto 78 |                 8 |       311888.00
+       2 | Centro Distribución | 2026-10 |      4 | SKU-00068 | Producto 68 |                 9 |       307044.00
+       2 | Centro Distribución | 2026-10 |      5 | SKU-00066 | Producto 66 |                 9 |       298278.00
+       2 | Centro Distribución | 2026-11 |      1 | SKU-00083 | Producto 83 |                 9 |       372789.00
+       2 | Centro Distribución | 2026-11 |      2 | SKU-00063 | Producto 63 |                11 |       348491.00
+       2 | Centro Distribución | 2026-11 |      3 | SKU-00059 | Producto 59 |                11 |       327063.00
+       2 | Centro Distribución | 2026-11 |      4 | SKU-00054 | Producto 54 |                11 |       300278.00
+       2 | Centro Distribución | 2026-11 |      5 | SKU-00061 | Producto 61 |                 9 |       276363.00
+       3 | Sede Regional Cali  | 2026-07 |      1 | SKU-00076 | Producto 76 |                 8 |       304096.00
+       3 | Sede Regional Cali  | 2026-07 |      2 | SKU-00072 | Producto 72 |                 8 |       288512.00
+       3 | Sede Regional Cali  | 2026-07 |      3 | SKU-00074 | Producto 74 |                 5 |       185190.00
+       3 | Sede Regional Cali  | 2026-07 |      4 | SKU-00043 | Producto 43 |                 7 |       153587.00
+       3 | Sede Regional Cali  | 2026-07 |      5 | SKU-00021 | Producto 21 |                 9 |       101043.00
+       3 | Sede Regional Cali  | 2026-08 |      1 | SKU-00040 | Producto 40 |                17 |       348160.00
+       3 | Sede Regional Cali  | 2026-08 |      2 | SKU-00076 | Producto 76 |                 9 |       342108.00
+       3 | Sede Regional Cali  | 2026-08 |      3 | SKU-00048 | Producto 48 |                14 |       341264.00
+       3 | Sede Regional Cali  | 2026-08 |      4 | SKU-00069 | Producto 69 |                 9 |       311427.00
+       3 | Sede Regional Cali  | 2026-08 |      5 | SKU-00067 | Producto 67 |                 9 |       302661.00
+       3 | Sede Regional Cali  | 2026-09 |      1 | SKU-00084 | Producto 84 |                 9 |       377172.00
+       3 | Sede Regional Cali  | 2026-09 |      2 | SKU-00064 | Producto 64 |                11 |       353848.00
+       3 | Sede Regional Cali  | 2026-09 |      3 | SKU-00060 | Producto 60 |                11 |       332420.00
+       3 | Sede Regional Cali  | 2026-09 |      4 | SKU-00063 | Producto 63 |                 9 |       285129.00
+       3 | Sede Regional Cali  | 2026-09 |      5 | SKU-00079 | Producto 79 |                 7 |       276311.00
+       3 | Sede Regional Cali  | 2026-10 |      1 | SKU-00084 | Producto 84 |                 7 |       293356.00
+       3 | Sede Regional Cali  | 2026-10 |      2 | SKU-00043 | Producto 43 |                13 |       285233.00
+       3 | Sede Regional Cali  | 2026-10 |      3 | SKU-00062 | Producto 62 |                 9 |       280746.00
+       3 | Sede Regional Cali  | 2026-10 |      4 | SKU-00048 | Producto 48 |                11 |       268136.00
+       3 | Sede Regional Cali  | 2026-10 |      5 | SKU-00031 | Producto 31 |                16 |       257552.00
+       3 | Sede Regional Cali  | 2026-11 |      1 | SKU-00079 | Producto 79 |                 7 |       276311.00
+       3 | Sede Regional Cali  | 2026-11 |      2 | SKU-00069 | Producto 69 |                 7 |       242221.00
+       3 | Sede Regional Cali  | 2026-11 |      3 | SKU-00053 | Producto 53 |                 9 |       241299.00
+       3 | Sede Regional Cali  | 2026-11 |      4 | SKU-00084 | Producto 84 |                 5 |       209540.00
+       3 | Sede Regional Cali  | 2026-11 |      5 | SKU-00043 | Producto 43 |                 9 |       197469.00
+       4 | Sede Sur Bogotá     | 2026-08 |      1 | SKU-00090 | Producto 90 |                 9 |       403470.00
+       4 | Sede Sur Bogotá     | 2026-08 |      2 | SKU-00068 | Producto 68 |                11 |       375276.00
+       4 | Sede Sur Bogotá     | 2026-08 |      3 | SKU-00063 | Producto 63 |                 9 |       285129.00
+       4 | Sede Sur Bogotá     | 2026-08 |      4 | SKU-00066 | Producto 66 |                 8 |       265136.00
+       4 | Sede Sur Bogotá     | 2026-08 |      5 | SKU-00037 | Producto 37 |                13 |       247247.00
+       4 | Sede Sur Bogotá     | 2026-09 |      1 | SKU-00070 | Producto 70 |                13 |       456170.00
+       4 | Sede Sur Bogotá     | 2026-09 |      2 | SKU-00044 | Producto 44 |                17 |       381276.00
+       4 | Sede Sur Bogotá     | 2026-09 |      3 | SKU-00073 | Producto 73 |                10 |       365510.00
+       4 | Sede Sur Bogotá     | 2026-09 |      4 | SKU-00082 | Producto 82 |                 7 |       286538.00
+       4 | Sede Sur Bogotá     | 2026-09 |      5 | SKU-00058 | Producto 58 |                 9 |       263214.00
+       4 | Sede Sur Bogotá     | 2026-10 |      1 | SKU-00082 | Producto 82 |                 6 |       245604.00
+       4 | Sede Sur Bogotá     | 2026-10 |      2 | SKU-00056 | Producto 56 |                 8 |       226176.00
+       4 | Sede Sur Bogotá     | 2026-10 |      3 | SKU-00080 | Producto 80 |                 5 |       199800.00
+       4 | Sede Sur Bogotá     | 2026-10 |      4 | SKU-00075 | Producto 75 |                 5 |       187625.00
+       4 | Sede Sur Bogotá     | 2026-10 |      5 | SKU-00049 | Producto 49 |                 7 |       174041.00
+       4 | Sede Sur Bogotá     | 2026-11 |      1 | SKU-00046 | Producto 46 |                13 |       304226.00
+       4 | Sede Sur Bogotá     | 2026-11 |      2 | SKU-00075 | Producto 75 |                 7 |       262675.00
+       4 | Sede Sur Bogotá     | 2026-11 |      3 | SKU-00049 | Producto 49 |                 9 |       223767.00
+       4 | Sede Sur Bogotá     | 2026-11 |      4 | SKU-00080 | Producto 80 |                 5 |       199800.00
+       4 | Sede Sur Bogotá     | 2026-11 |      5 | SKU-00054 | Producto 54 |                 7 |       191086.00
+       5 | Sede Barranquilla   | 2026-07 |      1 | SKU-00064 | Producto 64 |                 9 |       289512.00
+       5 | Sede Barranquilla   | 2026-07 |      2 | SKU-00061 | Producto 61 |                 6 |       184242.00
+       5 | Sede Barranquilla   | 2026-07 |      3 | SKU-00035 | Producto 35 |                 8 |       144360.00
+       5 | Sede Barranquilla   | 2026-07 |      4 | SKU-00006 | Producto 6  |                 7 |        27454.00
+       5 | Sede Barranquilla   | 2026-07 |      5 | SKU-00009 | Producto 9  |                 1 |         5383.00
+       5 | Sede Barranquilla   | 2026-08 |      1 | SKU-00061 | Producto 61 |                 8 |       245656.00
+       5 | Sede Barranquilla   | 2026-08 |      2 | SKU-00049 | Producto 49 |                 9 |       223767.00
+       5 | Sede Barranquilla   | 2026-08 |      3 | SKU-00042 | Producto 42 |                 9 |       193086.00
+       5 | Sede Barranquilla   | 2026-08 |      4 | SKU-00054 | Producto 54 |                 7 |       191086.00
+       5 | Sede Barranquilla   | 2026-08 |      5 | SKU-00040 | Producto 40 |                 5 |       102400.00
+       5 | Sede Barranquilla   | 2026-09 |      1 | SKU-00076 | Producto 76 |                 9 |       342108.00
+       5 | Sede Barranquilla   | 2026-09 |      2 | SKU-00054 | Producto 54 |                10 |       272980.00
+       5 | Sede Barranquilla   | 2026-09 |      3 | SKU-00025 | Producto 25 |                17 |       223975.00
+       5 | Sede Barranquilla   | 2026-09 |      4 | SKU-00073 | Producto 73 |                 6 |       219306.00
+       5 | Sede Barranquilla   | 2026-09 |      5 | SKU-00037 | Producto 37 |                11 |       209209.00
+       5 | Sede Barranquilla   | 2026-10 |      1 | SKU-00073 | Producto 73 |                17 |       621367.00
+       5 | Sede Barranquilla   | 2026-10 |      2 | SKU-00081 | Producto 81 |                 9 |       364023.00
+       5 | Sede Barranquilla   | 2026-10 |      3 | SKU-00078 | Producto 78 |                 6 |       233916.00
+       5 | Sede Barranquilla   | 2026-10 |      4 | SKU-00052 | Producto 52 |                 8 |       210592.00
+       5 | Sede Barranquilla   | 2026-10 |      5 | SKU-00057 | Producto 57 |                 6 |       172554.00
+       5 | Sede Barranquilla   | 2026-11 |      1 | SKU-00078 | Producto 78 |                 9 |       350874.00
+       5 | Sede Barranquilla   | 2026-11 |      2 | SKU-00071 | Producto 71 |                 8 |       284616.00
+       5 | Sede Barranquilla   | 2026-11 |      3 | SKU-00042 | Producto 42 |                13 |       278902.00
+       5 | Sede Barranquilla   | 2026-11 |      4 | SKU-00064 | Producto 64 |                 8 |       257344.00
+       5 | Sede Barranquilla   | 2026-11 |      5 | SKU-00083 | Producto 83 |                 5 |       207105.00
+(117 rows)
+
+=== CONSULTA 05: Ventas mensuales y variación contra mes anterior (CTE + LAG) ===
+ id_sede |     nombre_sede     | periodo | pedidos_completados | total_vendido | mes_anterior | variacion_absoluta | variacion_pct 
+---------+---------------------+---------+---------------------+---------------+--------------+--------------------+---------------
+       1 | Sede Norte Bogotá   | 2026-07 |                   3 |     586972.00 |              |                    |              
+       1 | Sede Norte Bogotá   | 2026-08 |                  15 |    5567891.00 |    586972.00 |         4980919.00 |        848.58
+       1 | Sede Norte Bogotá   | 2026-09 |                  14 |    5201854.00 |   5567891.00 |         -366037.00 |         -6.57
+       1 | Sede Norte Bogotá   | 2026-10 |                  15 |    4118090.00 |   5201854.00 |        -1083764.00 |        -20.83
+       1 | Sede Norte Bogotá   | 2026-11 |                  12 |    4380869.00 |   4118090.00 |          262779.00 |          6.38
+       2 | Centro Distribución | 2026-07 |                   1 |     294382.00 |              |                    |              
+       2 | Centro Distribución | 2026-08 |                  19 |    5594702.00 |    294382.00 |         5300320.00 |       1800.49
+       2 | Centro Distribución | 2026-09 |                  12 |    4197828.00 |   5594702.00 |        -1396874.00 |        -24.97
+       2 | Centro Distribución | 2026-10 |                  14 |    4169842.00 |   4197828.00 |          -27986.00 |         -0.67
+       2 | Centro Distribución | 2026-11 |                  12 |    4382415.00 |   4169842.00 |          212573.00 |          5.10
+       3 | Sede Regional Cali  | 2026-07 |                   3 |    1419295.00 |              |                    |              
+       3 | Sede Regional Cali  | 2026-08 |                  14 |    4907836.00 |   1419295.00 |         3488541.00 |        245.79
+       3 | Sede Regional Cali  | 2026-09 |                  16 |    5115799.00 |   4907836.00 |          207963.00 |          4.24
+       3 | Sede Regional Cali  | 2026-10 |                  16 |    4637480.00 |   5115799.00 |         -478319.00 |         -9.35
+       3 | Sede Regional Cali  | 2026-11 |                  10 |    2476385.00 |   4637480.00 |        -2161095.00 |        -46.60
+       4 | Sede Sur Bogotá     | 2026-08 |                   8 |    2902907.00 |              |                    |              
+       4 | Sede Sur Bogotá     | 2026-09 |                   7 |    2342070.00 |   2902907.00 |         -560837.00 |        -19.32
+       4 | Sede Sur Bogotá     | 2026-10 |                   6 |    1741670.00 |   2342070.00 |         -600400.00 |        -25.64
+       4 | Sede Sur Bogotá     | 2026-11 |                   7 |    2058662.00 |   1741670.00 |          316992.00 |         18.20
+       5 | Sede Barranquilla   | 2026-07 |                   1 |     650951.00 |              |                    |              
+       5 | Sede Barranquilla   | 2026-08 |                   7 |    1418607.00 |    650951.00 |          767656.00 |        117.93
+       5 | Sede Barranquilla   | 2026-09 |                   7 |    2453931.00 |   1418607.00 |         1035324.00 |         72.98
+       5 | Sede Barranquilla   | 2026-10 |                   6 |    2600797.00 |   2453931.00 |          146866.00 |          5.98
+       5 | Sede Barranquilla   | 2026-11 |                   8 |    2884628.00 |   2600797.00 |          283831.00 |         10.91
+(24 rows)
+
+=== CONSULTA 06: Clientes con compras multisede (GROUP BY + HAVING) ===
+ id_cliente | num_documento | nombre_completo_cliente | sedes_visitadas |                                  detalle_sedes                                   | pedidos_completados | total_comprado 
+------------+---------------+-------------------------+-----------------+----------------------------------------------------------------------------------+---------------------+----------------
+         92 |    1000728548 | Cliente 92 Apellido     |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     2322980.00
+          5 |    1000039595 | Cliente 5 Apellido      |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     2092161.00
+         62 |    1000490978 | Cliente 62 Apellido     |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     2071934.00
+         17 |    1000134623 | Cliente 17 Apellido     |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     1907945.00
+         90 |    1000712710 | Cliente 90 Apellido     |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     1753157.00
+          3 |    1000023757 | Cliente 3 Apellido      |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     1619530.00
+         50 |    1000395950 | Cliente 50 Apellido     |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     1460671.00
+         15 |    1000118785 | Cliente 15 Apellido     |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     1430172.00
+        111 |    1000879009 | Cliente 111 Apellido    |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     1095277.00
+         78 |    1000617682 | Cliente 78 Apellido     |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |     1006747.00
+        104 |    1000823576 | Cliente 104 Apellido    |               4 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali | Sede Sur Bogotá   |                   4 |      441794.00
+         29 |    1000229651 | Cliente 29 Apellido     |               4 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali |                   4 |      216774.00
+         72 |    1000570168 | Cliente 72 Apellido     |               3 | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali                       |                   3 |     1946697.00
+         57 |    1000451383 | Cliente 57 Apellido     |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |     1908867.00
+        102 |    1000807738 | Cliente 102 Apellido    |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1831278.00
+         12 |    1000095028 | Cliente 12 Apellido     |               3 | Sede Norte Bogotá | Sede Regional Cali | Sede Sur Bogotá                         |                   3 |     1827765.00
+        107 |    1000847333 | Cliente 107 Apellido    |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1799136.00
+        117 |    1000926523 | Cliente 117 Apellido    |               3 | Centro Distribución | Sede Barranquilla | Sede Regional Cali                     |                   3 |     1783065.00
+         42 |    1000332598 | Cliente 42 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1666029.00
+         47 |    1000372193 | Cliente 47 Apellido     |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |     1610745.00
+         80 |    1000633520 | Cliente 80 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá                      |                   3 |     1607199.00
+         27 |    1000213813 | Cliente 27 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá                      |                   3 |     1561986.00
+         48 |    1000380112 | Cliente 48 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1440489.00
+         35 |    1000277165 | Cliente 35 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1398042.00
+         45 |    1000356355 | Cliente 45 Apellido     |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |     1376361.00
+        105 |    1000831495 | Cliente 105 Apellido    |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1314843.00
+        108 |    1000855252 | Cliente 108 Apellido    |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |     1211112.00
+         41 |    1000324679 | Cliente 41 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1102939.00
+         38 |    1000300922 | Cliente 38 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1086927.00
+         33 |    1000261327 | Cliente 33 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |     1048707.00
+        110 |    1000871090 | Cliente 110 Apellido    |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |     1047480.00
+        116 |    1000918604 | Cliente 116 Apellido    |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |      958943.00
+         23 |    1000182137 | Cliente 23 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá                      |                   3 |      860472.00
+        101 |    1000799819 | Cliente 101 Apellido    |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |      859770.00
+         53 |    1000419707 | Cliente 53 Apellido     |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |      851472.00
+         83 |    1000657277 | Cliente 83 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Sur Bogotá                        |                   3 |      844323.00
+        113 |    1000894847 | Cliente 113 Apellido    |               3 | Centro Distribución | Sede Barranquilla | Sede Regional Cali                     |                   3 |      835401.00
+         51 |    1000403869 | Cliente 51 Apellido     |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |      814401.00
+         98 |    1000776062 | Cliente 98 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |      807642.00
+         21 |    1000166299 | Cliente 21 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá                      |                   3 |      772344.00
+         71 |    1000562249 | Cliente 71 Apellido     |               3 | Sede Norte Bogotá | Sede Regional Cali | Sede Sur Bogotá                         |                   3 |      758682.00
+         60 |    1000475140 | Cliente 60 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Regional Cali                     |                   3 |      701067.00
+         56 |    1000443464 | Cliente 56 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Regional Cali                     |                   3 |      674379.00
+         39 |    1000308841 | Cliente 39 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |      643386.00
+         68 |    1000538492 | Cliente 68 Apellido     |               3 | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali                       |                   3 |      637932.00
+         66 |    1000522654 | Cliente 66 Apellido     |               3 | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali                       |                   3 |      636237.00
+         11 |    1000087109 | Cliente 11 Apellido     |               3 | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali                       |                   3 |      632010.00
+        119 |    1000942361 | Cliente 119 Apellido    |               3 | Centro Distribución | Sede Barranquilla | Sede Regional Cali                     |                   3 |      519045.00
+          8 |    1000063352 | Cliente 8 Apellido      |               3 | Sede Norte Bogotá | Sede Regional Cali | Sede Sur Bogotá                         |                   3 |      515052.00
+         86 |    1000681034 | Cliente 86 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá                      |                   3 |      513435.00
+         36 |    1000285084 | Cliente 36 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |      418626.00
+         96 |    1000760224 | Cliente 96 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |      399555.00
+         24 |    1000190056 | Cliente 24 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Sur Bogotá                        |                   3 |      353848.00
+         69 |    1000546411 | Cliente 69 Apellido     |               3 | Sede Norte Bogotá | Sede Regional Cali | Sede Sur Bogotá                         |                   3 |      348056.00
+         99 |    1000783981 | Cliente 99 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |      342342.00
+         54 |    1000427626 | Cliente 54 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Regional Cali                     |                   3 |      326349.00
+          9 |    1000071271 | Cliente 9 Apellido      |               3 | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali                       |                   3 |      317349.00
+         84 |    1000665196 | Cliente 84 Apellido     |               3 | Centro Distribución | Sede Barranquilla | Sede Norte Bogotá                      |                   3 |      277902.00
+         74 |    1000586006 | Cliente 74 Apellido     |               3 | Sede Barranquilla | Sede Norte Bogotá | Sede Regional Cali                       |                   3 |      269214.00
+         44 |    1000348436 | Cliente 44 Apellido     |               3 | Centro Distribución | Sede Norte Bogotá | Sede Regional Cali                     |                   3 |      242838.00
+        114 |    1000902766 | Cliente 114 Apellido    |               3 | Centro Distribución | Sede Regional Cali | Sede Sur Bogotá                       |                   3 |      234150.00
+         32 |    1000253408 | Cliente 32 Apellido     |               2 | Centro Distribución | Sede Norte Bogotá                                          |                   2 |     1342297.00
+         65 |    1000514735 | Cliente 65 Apellido     |               2 | Sede Regional Cali | Sede Sur Bogotá                                             |                   2 |     1144828.00
+         87 |    1000688953 | Cliente 87 Apellido     |               2 | Centro Distribución | Sede Norte Bogotá                                          |                   2 |     1059265.00
+         30 |    1000237570 | Cliente 30 Apellido     |               2 | Centro Distribución | Sede Norte Bogotá                                          |                   2 |     1020591.00
+         63 |    1000498897 | Cliente 63 Apellido     |               2 | Sede Regional Cali | Sede Sur Bogotá                                             |                   2 |     1001312.00
+          2 |    1000015838 | Cliente 2 Apellido      |               2 | Sede Regional Cali | Sede Sur Bogotá                                             |                   2 |      967891.00
+         20 |    1000158380 | Cliente 20 Apellido     |               2 | Sede Norte Bogotá | Sede Sur Bogotá                                              |                   2 |      872770.00
+         93 |    1000736467 | Cliente 93 Apellido     |               2 | Centro Distribución | Sede Norte Bogotá                                          |                   2 |      822836.00
+         77 |    1000609763 | Cliente 77 Apellido     |               2 | Sede Norte Bogotá | Sede Sur Bogotá                                              |                   2 |      757351.00
+         75 |    1000593925 | Cliente 75 Apellido     |               2 | Sede Norte Bogotá | Sede Sur Bogotá                                              |                   2 |      726774.00
+         95 |    1000752305 | Cliente 95 Apellido     |               2 | Centro Distribución | Sede Norte Bogotá                                          |                   2 |      723436.00
+         81 |    1000641439 | Cliente 81 Apellido     |               2 | Sede Norte Bogotá | Sede Sur Bogotá                                              |                   2 |      505799.00
+         18 |    1000142542 | Cliente 18 Apellido     |               2 | Sede Norte Bogotá | Sede Sur Bogotá                                              |                   2 |      435437.00
+        120 |    1000950280 | Cliente 120 Apellido    |               2 | Sede Regional Cali | Sede Sur Bogotá                                             |                   2 |      366978.00
+          6 |    1000047514 | Cliente 6 Apellido      |               2 | Sede Regional Cali | Sede Sur Bogotá                                             |                   2 |      359387.00
+         14 |    1000110866 | Cliente 14 Apellido     |               2 | Sede Norte Bogotá | Sede Sur Bogotá                                              |                   2 |      225254.00
+         26 |    1000205894 | Cliente 26 Apellido     |               2 | Centro Distribución | Sede Norte Bogotá                                          |                   2 |      196034.00
+         59 |    1000467221 | Cliente 59 Apellido     |               2 | Sede Regional Cali | Sede Sur Bogotá                                             |                   2 |      131594.00
+         89 |    1000704791 | Cliente 89 Apellido     |               2 | Centro Distribución | Sede Norte Bogotá                                          |                   2 |       90998.00
+(80 rows)
+
+=== CONSULTA 07: Pedidos con pagos pendientes (CTE + LEFT JOIN) ===
+ id_pedido |     nombre_sede     |       cliente        | estado_pedido | fecha_pedido | total_registrado | pagos_confirmados | saldo_por_pagar 
+-----------+---------------------+----------------------+---------------+--------------+------------------+-------------------+-----------------
+       264 | Sede Barranquilla   | Cliente 82 Apellido  | Pendiente     | 2026-08-30   |        700112.00 |         245039.20 |       455072.80
+         4 | Centro Distribución | Cliente 22 Apellido  | Pendiente     | 2026-08-25   |        690989.00 |         241846.15 |       449142.85
+        72 | Sede Barranquilla   | Cliente 58 Apellido  | Pendiente     | 2026-08-17   |        680591.00 |         238206.85 |       442384.15
+       148 | Centro Distribución | Cliente 40 Apellido  | Pendiente     | 2026-10-04   |        636698.00 |         222844.30 |       413853.70
+       258 | Sede Norte Bogotá   | Cliente 40 Apellido  | Pendiente     | 2026-11-17   |        624984.00 |         218744.40 |       406239.60
+        24 | Sede Barranquilla   | Cliente 52 Apellido  | Pendiente     | 2026-09-13   |        609452.00 |         213308.20 |       396143.80
+        18 | Sede Norte Bogotá   | Cliente 10 Apellido  | Pendiente     | 2026-08-02   |        585787.00 |         205025.45 |       380761.55
+       278 | Sede Regional Cali  | Cliente 70 Apellido  | Pendiente     | 2026-08-07   |        544369.00 |         190529.15 |       353839.85
+       312 | Sede Barranquilla   | Cliente 88 Apellido  | Pendiente     | 2026-08-03   |        543142.00 |         190099.70 |       353042.30
+       216 | Sede Barranquilla   | Cliente 76 Apellido  | Pendiente     | 2026-09-26   |        526692.00 |         184342.20 |       342349.80
+       114 | Sede Norte Bogotá   | Cliente 22 Apellido  | Pendiente     | 2026-10-08   |        518870.00 |         181604.50 |       337265.50
+       134 | Sede Regional Cali  | Cliente 52 Apellido  | Pendiente     | 2026-10-27   |        489929.00 |         171475.15 |       318453.85
+       306 | Sede Norte Bogotá   | Cliente 46 Apellido  | Pendiente     | 2026-10-21   |        483122.00 |         169092.70 |       314029.30
+       168 | Sede Barranquilla   | Cliente 70 Apellido  | Pendiente     | 2026-10-23   |        405834.00 |         142041.90 |       263792.10
+        52 | Centro Distribución | Cliente 28 Apellido  | Pendiente     | 2026-07-29   |        404191.00 |         141466.85 |       262724.15
+       162 | Sede Norte Bogotá   | Cliente 28 Apellido  | Pendiente     | 2026-09-11   |        376831.00 |         131890.85 |       244940.15
+       244 | Centro Distribución | Cliente 52 Apellido  | Pendiente     | 2026-08-11   |        338498.00 |         118474.30 |       220023.70
+       292 | Centro Distribución | Cliente 58 Apellido  | Pendiente     | 2026-11-13   |        338446.00 |         118456.10 |       219989.90
+        38 | Sede Regional Cali  | Cliente 40 Apellido  | Pendiente     | 2026-08-21   |        291694.00 |         102092.90 |       189601.10
+       182 | Sede Regional Cali  | Cliente 58 Apellido  | Pendiente     | 2026-09-30   |        256474.00 |          89765.90 |       166708.10
+       326 | Sede Regional Cali  | Cliente 76 Apellido  | Pendiente     | 2026-11-09   |        250987.00 |          87845.45 |       163141.55
+        66 | Sede Norte Bogotá   | Cliente 16 Apellido  | Pendiente     | 2026-11-04   |        215488.00 |          75420.80 |       140067.20
+       305 | Sede Norte Bogotá   | Cliente 39 Apellido  | Completado    | 2026-10-14   |        342108.00 |         205264.80 |       136843.20
+        80 | Sede Barranquilla   | Cliente 119 Apellido | Completado    | 2026-10-12   |        328959.00 |         197375.40 |       131583.60
+       250 | Sede Norte Bogotá   | Cliente 99 Apellido  | Completado    | 2026-09-22   |        315784.00 |         189470.40 |       126313.60
+       195 | Centro Distribución | Cliente 39 Apellido  | Completado    | 2026-08-31   |        286538.00 |         171922.80 |       114615.20
+       215 | Sede Sur Bogotá     | Cliente 69 Apellido  | Completado    | 2026-09-19   |        263214.00 |         157928.40 |       105285.60
+        86 | Sede Regional Cali  | Cliente 46 Apellido  | Pendiente     | 2026-11-23   |        156178.00 |          54662.30 |       101515.70
+       196 | Centro Distribución | Cliente 46 Apellido  | Pendiente     | 2026-09-07   |        152386.00 |          53335.10 |        99050.90
+       160 | Sede Barranquilla   | Cliente 9 Apellido   | Completado    | 2026-08-28   |        245656.00 |         147393.60 |        98262.40
+       105 | Sede Norte Bogotá   | Cliente 74 Apellido  | Completado    | 2026-08-06   |        225176.00 |         135105.60 |        90070.40
+        50 | Sede Norte Bogotá   | Cliente 14 Apellido  | Completado    | 2026-11-13   |        201774.00 |         121064.40 |        80709.60
+       125 | Sede Regional Cali  | Cliente 104 Apellido | Completado    | 2026-08-25   |        184320.00 |         110592.00 |        73728.00
+        70 | Sede Regional Cali  | Cliente 44 Apellido  | Completado    | 2026-08-03   |        175528.00 |         105316.80 |        70211.20
+        15 | Sede Sur Bogotá     | Cliente 104 Apellido | Completado    | 2026-11-10   |        163814.00 |          98288.40 |        65525.60
+       185 | Sede Norte Bogotá   | Cliente 84 Apellido  | Completado    | 2026-10-21   |        157944.00 |          94766.40 |        63177.60
+       210 | Sede Norte Bogotá   | Cliente 34 Apellido  | Pendiente     | 2026-08-15   |         87764.00 |          30717.40 |        57046.60
+       130 | Sede Norte Bogotá   | Cliente 24 Apellido  | Completado    | 2026-09-29   |        138925.00 |          83355.00 |        55570.00
+       300 | Centro Distribución | Cliente 119 Apellido | Completado    | 2026-09-09   |        122828.00 |          73696.80 |        49131.20
+       335 | Sede Sur Bogotá     | Cliente 24 Apellido  | Completado    | 2026-09-12   |        122802.00 |          73681.20 |        49120.80
+       260 | Centro Distribución | Cliente 54 Apellido  | Completado    | 2026-08-02   |        118575.00 |          71145.00 |        47430.00
+       205 | Sede Regional Cali  | Cliente 114 Apellido | Completado    | 2026-11-09   |        117088.00 |          70252.80 |        46835.20
+        75 | Centro Distribución | Cliente 84 Apellido  | Completado    | 2026-09-07   |        116984.00 |          70190.40 |        46793.60
+       320 | Sede Barranquilla   | Cliente 29 Apellido  | Completado    | 2026-09-28   |        114114.00 |          68468.40 |        45645.60
+       150 | Sede Regional Cali  | Cliente 54 Apellido  | Completado    | 2026-10-18   |        112679.00 |          67607.40 |        45071.60
+        95 | Sede Sur Bogotá     | Cliente 114 Apellido | Completado    | 2026-09-26   |        105348.00 |          63208.80 |        42139.20
+       230 | Sede Regional Cali  | Cliente 64 Apellido  | Pendiente     | 2026-09-03   |         61518.00 |          21531.30 |        39986.70
+       245 | Sede Regional Cali  | Cliente 59 Apellido  | Completado    | 2026-08-18   |         96504.00 |          57902.40 |        38601.60
+       340 | Centro Distribución | Cliente 64 Apellido  | Pendiente     | 2026-10-17   |         58648.00 |          20526.80 |        38121.20
+        40 | Sede Barranquilla   | Cliente 54 Apellido  | Completado    | 2026-09-04   |         95095.00 |          57057.00 |        38038.00
+        20 | Centro Distribución | Cliente 24 Apellido  | Completado    | 2026-08-16   |         92121.00 |          55272.60 |        36848.40
+       120 | Sede Barranquilla   | Cliente 64 Apellido  | Pendiente     | 2026-11-19   |         52700.00 |          18445.00 |        34255.00
+       100 | Centro Distribución | Cliente 34 Apellido  | Pendiente     | 2026-10-31   |         49726.00 |          17404.10 |        32321.90
+       190 | Sede Regional Cali  | Cliente 119 Apellido | Completado    | 2026-11-25   |         67258.00 |          40354.80 |        26903.20
+       345 | Sede Norte Bogotá   | Cliente 104 Apellido | Completado    | 2026-11-21   |         58544.00 |          35126.40 |        23417.60
+         5 | Sede Regional Cali  | Cliente 29 Apellido  | Completado    | 2026-09-01   |         52752.00 |          31651.20 |        21100.80
+       325 | Sede Regional Cali  | Cliente 69 Apellido  | Completado    | 2026-11-02   |         52648.00 |          31588.80 |        21059.20
+        60 | Centro Distribución | Cliente 89 Apellido  | Completado    | 2026-09-23   |         51317.00 |          30790.20 |        20526.80
+       290 | Sede Norte Bogotá   | Cliente 44 Apellido  | Completado    | 2026-10-30   |         48291.00 |          28974.60 |        19316.40
+       115 | Centro Distribución | Cliente 29 Apellido  | Completado    | 2026-10-15   |         46960.00 |          28176.00 |        18784.00
+        65 | Sede Norte Bogotá   | Cliente 9 Apellido   | Completado    | 2026-10-28   |         43908.00 |          26344.80 |        17563.20
+       170 | Sede Norte Bogotá   | Cliente 89 Apellido  | Completado    | 2026-11-06   |         39681.00 |          23808.60 |        15872.40
+       235 | Centro Distribución | Cliente 104 Apellido | Completado    | 2026-10-08   |         35116.00 |          21069.60 |        14046.40
+       135 | Sede Sur Bogotá     | Cliente 59 Apellido  | Completado    | 2026-11-03   |         35090.00 |          21054.00 |        14036.00
+        10 | Sede Norte Bogotá   | Cliente 69 Apellido  | Completado    | 2026-10-06   |         32194.00 |          19316.40 |        12877.60
+       270 | Sede Regional Cali  | Cliente 9 Apellido   | Completado    | 2026-10-11   |         27785.00 |          16671.00 |        11114.00
+       255 | Sede Sur Bogotá     | Cliente 14 Apellido  | Completado    | 2026-10-27   |         23480.00 |          14088.00 |         9392.00
+       310 | Sede Regional Cali  | Cliente 74 Apellido  | Completado    | 2026-11-18   |         22045.00 |          13227.00 |         8818.00
+       200 | Sede Barranquilla   | Cliente 74 Apellido  | Completado    | 2026-10-05   |         21993.00 |          13195.80 |         8797.20
+       180 | Centro Distribución | Cliente 44 Apellido  | Completado    | 2026-09-16   |         19019.00 |          11411.40 |         7607.60
+        30 | Sede Regional Cali  | Cliente 99 Apellido  | Completado    | 2026-10-25   |         17636.00 |          10581.60 |         7054.40
+        85 | Sede Regional Cali  | Cliente 39 Apellido  | Completado    | 2026-11-16   |         14740.00 |           8844.00 |         5896.00
+       315 | Centro Distribución | Cliente 114 Apellido | Completado    | 2026-08-24   |         11714.00 |           7028.40 |         4685.60
+       140 | Centro Distribución | Cliente 99 Apellido  | Completado    | 2026-08-09   |          8922.00 |           5353.20 |         3568.80
+       280 | Sede Barranquilla   | Cliente 84 Apellido  | Completado    | 2026-08-21   |          2974.00 |           1784.40 |         1189.60
+       225 | Sede Norte Bogotá   | Cliente 29 Apellido  | Completado    | 2026-07-30   |          2948.00 |           1768.80 |         1179.20
+       319 | Sede Sur Bogotá     | Cliente 22 Apellido  | Pendiente     | 2026-09-21   |        762578.00 |              0.00 |       762578.00
+       203 | Centro Distribución | Cliente 100 Apellido | Pendiente     | 2026-10-26   |        689398.00 |              0.00 |       689398.00
+        59 | Centro Distribución | Cliente 82 Apellido  | Pendiente     | 2026-09-16   |        535532.00 |              0.00 |       535532.00
+       223 | Sede Sur Bogotá     | Cliente 10 Apellido  | Pendiente     | 2026-11-14   |        486059.00 |              0.00 |       486059.00
+        79 | Sede Sur Bogotá     | Cliente 112 Apellido | Pendiente     | 2026-10-05   |        480293.00 |              0.00 |       480293.00
+       141 | Sede Regional Cali  | Cliente 106 Apellido | Pendiente     | 2026-08-16   |        464014.00 |              0.00 |       464014.00
+       189 | Sede Regional Cali  | Cliente 112 Apellido | Pendiente     | 2026-11-18   |        459583.00 |              0.00 |       459583.00
+       333 | Sede Regional Cali  | Cliente 10 Apellido  | Pendiente     | 2026-08-29   |        454167.00 |              0.00 |       454167.00
+       299 | Centro Distribución | Cliente 112 Apellido | Pendiente     | 2026-09-02   |        392198.00 |              0.00 |       392198.00
+       121 | Sede Norte Bogotá   | Cliente 76 Apellido  | Pendiente     | 2026-07-28   |        384529.00 |              0.00 |       384529.00
+       251 | Centro Distribución | Cliente 106 Apellido | Pendiente     | 2026-09-29   |        382555.00 |              0.00 |       382555.00
+       107 | Centro Distribución | Cliente 88 Apellido  | Pendiente     | 2026-08-20   |        368971.00 |              0.00 |       368971.00
+        73 | Sede Norte Bogotá   | Cliente 70 Apellido  | Pendiente     | 2026-08-24   |        367562.00 |              0.00 |       367562.00
+       347 | Centro Distribución | Cliente 118 Apellido | Pendiente     | 2026-08-06   |        366283.00 |              0.00 |       366283.00
+       313 | Sede Norte Bogotá   | Cliente 100 Apellido | Pendiente     | 2026-08-10   |        334115.00 |              0.00 |       334115.00
+        93 | Sede Regional Cali  | Cliente 100 Apellido | Pendiente     | 2026-09-12   |        326862.00 |              0.00 |       326862.00
+        25 | Sede Norte Bogotá   | Cliente 64 Apellido  | Pendiente     | 2026-09-20   |        304096.00 |              0.00 |       304096.00
+       237 | Sede Regional Cali  | Cliente 118 Apellido | Pendiente     | 2026-10-22   |        301843.00 |              0.00 |       301843.00
+       169 | Sede Norte Bogotá   | Cliente 82 Apellido  | Pendiente     | 2026-10-30   |        272831.00 |              0.00 |       272831.00
+        45 | Sede Regional Cali  | Cliente 94 Apellido  | Pendiente     | 2026-10-09   |        245355.00 |              0.00 |       245355.00
+       127 | Sede Sur Bogotá     | Cliente 118 Apellido | Pendiente     | 2026-09-08   |        202339.00 |              0.00 |       202339.00
+        11 | Centro Distribución | Cliente 76 Apellido  | Pendiente     | 2026-10-13   |        179398.00 |              0.00 |       179398.00
+       217 | Sede Norte Bogotá   | Cliente 88 Apellido  | Pendiente     | 2026-10-03   |        158509.00 |              0.00 |       158509.00
+        31 | Sede Sur Bogotá     | Cliente 106 Apellido | Pendiente     | 2026-11-01   |        149308.00 |              0.00 |       149308.00
+       265 | Sede Norte Bogotá   | Cliente 94 Apellido  | Pendiente     | 2026-09-06   |        102400.00 |              0.00 |       102400.00
+       155 | Centro Distribución | Cliente 94 Apellido  | Pendiente     | 2026-11-22   |         70206.00 |              0.00 |        70206.00
+       271 | Sede Sur Bogotá     | Cliente 16 Apellido  | Pendiente     | 2026-10-18   |         65875.00 |              0.00 |        65875.00
+       285 | Sede Regional Cali  | Cliente 4 Apellido   | Pendiente     | 2026-09-25   |         61544.00 |              0.00 |        61544.00
+       175 | Sede Sur Bogotá     | Cliente 4 Apellido   | Pendiente     | 2026-08-12   |         58570.00 |              0.00 |        58570.00
+(105 rows)
+
+=== CONSULTA 08: Pedidos con diversidad de productos (>= 3 distintos, HAVING) ===
+ id_sede | id_pedido |     nombre_sede     | fecha_pedido |   estado   | productos_distintos | total_unidades | importe_registrado 
+---------+-----------+---------------------+--------------+------------+---------------------+----------------+--------------------
+       5 |       184 | Sede Barranquilla   | 2026-10-14   | Completado |                   5 |             35 |         1018253.00
+       1 |       194 | Sede Norte Bogotá   | 2026-08-24   | Completado |                   5 |             31 |          922697.00
+       1 |       129 | Sede Norte Bogotá   | 2026-09-22   | Completado |                   5 |             30 |          919262.00
+       4 |       319 | Sede Sur Bogotá     | 2026-09-21   | Pendiente  |                   5 |             35 |          762578.00
+       2 |       204 | Centro Distribución | 2026-11-02   | Completado |                   5 |             27 |          755552.00
+       4 |       239 | Sede Sur Bogotá     | 2026-11-05   | Completado |                   5 |             31 |          751760.00
+       3 |       229 | Sede Regional Cali  | 2026-08-27   | Completado |                   5 |             35 |          742124.00
+       3 |        94 | Sede Regional Cali  | 2026-09-19   | Completado |                   5 |             35 |          711443.00
+       1 |       274 | Sede Norte Bogotá   | 2026-11-08   | Completado |                   5 |             35 |          711443.00
+       3 |        14 | Sede Regional Cali  | 2026-11-03   | Cancelado  |                   5 |             31 |          706469.00
+       5 |       264 | Sede Barranquilla   | 2026-08-30   | Pendiente  |                   5 |             30 |          700112.00
+       1 |       329 | Sede Norte Bogotá   | 2026-08-01   | Completado |                   5 |             31 |          696242.00
+       2 |         4 | Centro Distribución | 2026-08-25   | Pendiente  |                   5 |             35 |          690989.00
+       3 |       174 | Sede Regional Cali  | 2026-08-05   | Completado |                   5 |             30 |          682580.00
+       3 |       214 | Sede Regional Cali  | 2026-09-12   | Completado |                   5 |             23 |          680450.00
+       1 |        49 | Sede Norte Bogotá   | 2026-11-06   | Cancelado  |                   5 |             35 |          660308.00
+       4 |        39 | Sede Sur Bogotá     | 2026-08-28   | Completado |                   5 |             30 |          656282.00
+       5 |       104 | Sede Barranquilla   | 2026-07-30   | Completado |                   5 |             31 |          650951.00
+       2 |       219 | Centro Distribución | 2026-10-17   | Completado |                   5 |             30 |          650438.00
+       1 |       249 | Sede Norte Bogotá   | 2026-09-15   | Completado |                   5 |             27 |          648899.00
+       5 |       344 | Sede Barranquilla   | 2026-11-14   | Completado |                   5 |             25 |          644951.00
+       2 |       139 | Centro Distribución | 2026-08-02   | Completado |                   5 |             35 |          639854.00
+       3 |       349 | Sede Regional Cali  | 2026-08-20   | Completado |                   5 |             23 |          635159.00
+       3 |       294 | Sede Regional Cali  | 2026-07-29   | Completado |                   5 |             27 |          624062.00
+       1 |       209 | Sede Norte Bogotá   | 2026-08-08   | Completado |                   5 |             25 |          623036.00
+       5 |        24 | Sede Barranquilla   | 2026-09-13   | Pendiente  |                   5 |             27 |          609452.00
+       4 |       119 | Sede Sur Bogotá     | 2026-11-12   | Completado |                   5 |             25 |          608426.00
+       2 |       124 | Centro Distribución | 2026-08-18   | Cancelado  |                   5 |             23 |          601556.00
+       3 |        69 | Sede Regional Cali  | 2026-11-25   | Cancelado  |                   5 |             27 |          584615.00
+       2 |       284 | Centro Distribución | 2026-09-18   | Completado |                   5 |             31 |          580823.00
+       2 |       164 | Centro Distribución | 2026-09-25   | Completado |                   5 |             25 |          574823.00
+       2 |       339 | Centro Distribución | 2026-10-10   | Completado |                   5 |             27 |          558317.00
+       3 |       269 | Sede Regional Cali  | 2026-10-04   | Completado |                   5 |             19 |          555674.00
+       2 |        59 | Centro Distribución | 2026-09-16   | Pendiente  |                   5 |             31 |          535532.00
+       1 |       154 | Sede Norte Bogotá   | 2026-11-15   | Completado |                   5 |             20 |          531350.00
+       2 |        44 | Centro Distribución | 2026-10-02   | Completado |                   5 |             19 |          527915.00
+       5 |        64 | Sede Barranquilla   | 2026-10-21   | Completado |                   5 |             20 |          519662.00
+       1 |        74 | Sede Norte Bogotá   | 2026-08-31   | Completado |                   5 |             25 |          519305.00
+       1 |       114 | Sede Norte Bogotá   | 2026-10-08   | Pendiente  |                   5 |             27 |          518870.00
+       5 |       304 | Sede Barranquilla   | 2026-10-07   | Completado |                   5 |             23 |          513896.00
+       3 |       334 | Sede Regional Cali  | 2026-09-05   | Completado |                   5 |             20 |          513818.00
+       3 |       134 | Sede Regional Cali  | 2026-10-27   | Pendiente  |                   5 |             19 |          489929.00
+       3 |       109 | Sede Regional Cali  | 2026-09-03   | Completado |                   5 |             20 |          484598.00
+       4 |        79 | Sede Sur Bogotá     | 2026-10-05   | Pendiente  |                   5 |             23 |          480293.00
+       3 |       149 | Sede Regional Cali  | 2026-10-11   | Completado |                   5 |             31 |          480014.00
+       2 |       259 | Centro Distribución | 2026-11-24   | Completado |                   5 |             23 |          474449.00
+       3 |       309 | Sede Regional Cali  | 2026-11-11   | Cancelado  |                   5 |             30 |          463430.00
+       3 |       189 | Sede Regional Cali  | 2026-11-18   | Pendiente  |                   5 |            163 |          459583.00
+       2 |       324 | Centro Distribución | 2026-10-26   | Completado |                   5 |             15 |          446969.00
+       1 |        34 | Sede Norte Bogotá   | 2026-11-22   | Completado |                   5 |             23 |          440846.00
+       3 |       254 | Sede Regional Cali  | 2026-10-20   | Cancelado  |                   5 |             25 |          425801.00
+       2 |        99 | Centro Distribución | 2026-10-24   | Completado |                   5 |             15 |          425054.00
+       2 |        84 | Centro Distribución | 2026-11-09   | Completado |                   5 |             30 |          419600.00
+       4 |       159 | Sede Sur Bogotá     | 2026-08-21   | Completado |                   5 |             27 |          412217.00
+       2 |       299 | Centro Distribución | 2026-09-02   | Pendiente  |                   5 |             25 |          392198.00
+       3 |        29 | Sede Regional Cali  | 2026-10-18   | Completado |                   5 |             25 |          389276.00
+       2 |       179 | Centro Distribución | 2026-09-09   | Cancelado  |                   5 |             19 |          389120.00
+       1 |       289 | Sede Norte Bogotá   | 2026-10-23   | Cancelado  |                   5 |             20 |          385250.00
+       3 |        54 | Sede Regional Cali  | 2026-08-12   | Completado |                   5 |             15 |          379763.00
+       4 |       199 | Sede Sur Bogotá     | 2026-09-28   | Cancelado  |                   5 |             20 |          373562.00
+       2 |       244 | Centro Distribución | 2026-08-11   | Pendiente  |                   5 |             20 |          338498.00
+       1 |       314 | Sede Norte Bogotá   | 2026-08-17   | Completado |                   5 |             19 |          332141.00
+       1 |       234 | Sede Norte Bogotá   | 2026-10-01   | Cancelado  |                   5 |             15 |          315479.00
+       2 |        19 | Centro Distribución | 2026-08-09   | Completado |                   5 |             20 |          309278.00
+       5 |       144 | Sede Barranquilla   | 2026-09-06   | Cancelado  |                   5 |             15 |          306713.00
+       1 |        89 | Sede Norte Bogotá   | 2026-08-15   | Completado |                   5 |             19 |          304382.00
+       1 |         9 | Sede Norte Bogotá   | 2026-09-29   | Completado |                   5 |             15 |          293564.00
+       1 |       169 | Sede Norte Bogotá   | 2026-10-30   | Pendiente  |                   5 |             23 |          272831.00
+       4 |       279 | Sede Sur Bogotá     | 2026-08-14   | Completado |                   5 |             15 |          238046.00
+       5 |       224 | Sede Barranquilla   | 2026-11-21   | Completado |                   5 |             19 |          165587.00
+       3 |       158 | Sede Regional Cali  | 2026-08-14   | Cancelado  |                   4 |             30 |          844264.00
+       5 |       248 | Sede Barranquilla   | 2026-09-08   | Completado |                   4 |             30 |          820888.00
+       4 |        23 | Sede Sur Bogotá     | 2026-09-06   | Completado |                   4 |             30 |          777058.00
+       1 |       193 | Sede Norte Bogotá   | 2026-08-17   | Cancelado  |                   4 |             26 |          750656.00
+       2 |       203 | Centro Distribución | 2026-10-26   | Pendiente  |                   4 |             30 |          689398.00
+       1 |       138 | Sede Norte Bogotá   | 2026-11-24   | Cancelado  |                   4 |             22 |          668736.00
+       3 |       213 | Sede Regional Cali  | 2026-09-05   | Cancelado  |                   4 |             25 |          658587.00
+       2 |       148 | Centro Distribución | 2026-10-04   | Pendiente  |                   4 |             26 |          636698.00
+       3 |       293 | Sede Regional Cali  | 2026-11-20   | Completado |                   4 |             30 |          625114.00
+       1 |       258 | Sede Norte Bogotá   | 2026-11-17   | Pendiente  |                   4 |             25 |          624984.00
+       2 |       268 | Centro Distribución | 2026-09-27   | Cancelado  |                   4 |             20 |          614627.00
+       1 |        33 | Sede Norte Bogotá   | 2026-11-15   | Completado |                   4 |             25 |          588459.00
+       1 |        18 | Sede Norte Bogotá   | 2026-08-02   | Pendiente  |                   4 |            147 |          585787.00
+       2 |        43 | Centro Distribución | 2026-09-25   | Completado |                   4 |             20 |          585407.00
+       2 |        68 | Centro Distribución | 2026-11-18   | Completado |                   4 |             30 |          581284.00
+       3 |       238 | Sede Regional Cali  | 2026-10-29   | Completado |                   4 |             26 |          578258.00
+       5 |       328 | Sede Barranquilla   | 2026-11-23   | Completado |                   4 |             26 |          560726.00
+       4 |       303 | Sede Sur Bogotá     | 2026-09-30   | Completado |                   4 |             25 |          550473.00
+       3 |       278 | Sede Regional Cali  | 2026-08-07   | Pendiente  |                   4 |             15 |          544369.00
+       3 |        13 | Sede Regional Cali  | 2026-10-27   | Completado |                   4 |             26 |          540272.00
+       4 |       103 | Sede Sur Bogotá     | 2026-11-21   | Cancelado  |                   4 |             26 |          522740.00
+       3 |        53 | Sede Regional Cali  | 2026-08-05   | Completado |                   4 |             15 |          522454.00
+       4 |       183 | Sede Sur Bogotá     | 2026-10-07   | Completado |                   4 |             22 |          519714.00
+       3 |        78 | Sede Regional Cali  | 2026-09-28   | Completado |                   4 |             25 |          513948.00
+       1 |       273 | Sede Norte Bogotá   | 2026-11-01   | Completado |                   4 |             22 |          508026.00
+       4 |       223 | Sede Sur Bogotá     | 2026-11-14   | Pendiente  |                   4 |             20 |          486059.00
+       2 |       348 | Centro Distribución | 2026-08-13   | Completado |                   4 |             25 |          475962.00
+       5 |        48 | Sede Barranquilla   | 2026-10-30   | Cancelado  |                   4 |             22 |          475884.00
+       1 |       338 | Sede Norte Bogotá   | 2026-10-03   | Completado |                   4 |             30 |          470248.00
+       3 |       333 | Sede Regional Cali  | 2026-08-29   | Pendiente  |                   4 |            142 |          454167.00
+       5 |       128 | Sede Barranquilla   | 2026-09-15   | Completado |                   4 |             18 |          449482.00
+       2 |       283 | Centro Distribución | 2026-09-11   | Completado |                   4 |             26 |          446768.00
+       1 |       218 | Sede Norte Bogotá   | 2026-10-10   | Completado |                   4 |             18 |          443638.00
+       2 |       123 | Centro Distribución | 2026-08-11   | Completado |                   4 |             25 |          439437.00
+       1 |       178 | Sede Norte Bogotá   | 2026-09-02   | Completado |                   4 |             20 |          439307.00
+       1 |       113 | Sede Norte Bogotá   | 2026-10-01   | Completado |                   4 |             30 |          426418.00
+       2 |       188 | Centro Distribución | 2026-11-11   | Completado |                   4 |             15 |          412879.00
+       2 |       228 | Centro Distribución | 2026-08-20   | Completado |                   4 |             22 |          411600.00
+       1 |        58 | Sede Norte Bogotá   | 2026-09-09   | Completado |                   4 |             26 |          408782.00
+       5 |       168 | Sede Barranquilla   | 2026-10-23   | Pendiente  |                   4 |             25 |          405834.00
+       3 |       133 | Sede Regional Cali  | 2026-10-20   | Completado |                   4 |             20 |          392555.00
+       1 |       298 | Sede Norte Bogotá   | 2026-08-26   | Completado |                   4 |             14 |          388016.00
+       2 |         3 | Centro Distribución | 2026-08-18   | Completado |                   4 |             22 |          379458.00
+       1 |        73 | Sede Norte Bogotá   | 2026-08-24   | Pendiente  |                   4 |             14 |          367562.00
+       2 |       163 | Centro Distribución | 2026-09-18   | Completado |                   4 |             14 |          367562.00
+       3 |       173 | Sede Regional Cali  | 2026-07-29   | Completado |                   4 |             18 |          364744.00
+       3 |       318 | Sede Regional Cali  | 2026-09-14   | Completado |                   4 |             22 |          359004.00
+       2 |       323 | Centro Distribución | 2026-10-19   | Cancelado  |                   4 |             15 |          344212.00
+       1 |       313 | Sede Norte Bogotá   | 2026-08-10   | Pendiente  |                   4 |             20 |          334115.00
+       2 |        83 | Centro Distribución | 2026-11-02   | Cancelado  |                   4 |             18 |          329680.00
+       3 |        93 | Sede Regional Cali  | 2026-09-12   | Pendiente  |                   4 |             22 |          326862.00
+       4 |       343 | Sede Sur Bogotá     | 2026-11-07   | Cancelado  |                   4 |             14 |          326654.00
+       1 |        98 | Sede Norte Bogotá   | 2026-10-17   | Completado |                   4 |             15 |          322297.00
+       4 |       263 | Sede Sur Bogotá     | 2026-08-23   | Completado |                   4 |             18 |          317992.00
+       3 |       118 | Sede Regional Cali  | 2026-11-05   | Completado |                   4 |             14 |          306200.00
+       5 |        88 | Sede Barranquilla   | 2026-08-08   | Completado |                   4 |             20 |          304895.00
+       3 |        38 | Sede Regional Cali  | 2026-08-21   | Pendiente  |                   4 |             18 |          291694.00
+       2 |       108 | Centro Distribución | 2026-08-27   | Completado |                   4 |             10 |          279798.00
+       5 |         8 | Sede Barranquilla   | 2026-09-22   | Completado |                   4 |             15 |          272623.00
+       5 |       208 | Sede Barranquilla   | 2026-08-01   | Completado |                   4 |             14 |          265292.00
+       5 |       288 | Sede Barranquilla   | 2026-10-16   | Cancelado  |                   4 |             10 |          250578.00
+       4 |        63 | Sede Sur Bogotá     | 2026-10-14   | Completado |                   4 |             10 |          235968.00
+       2 |       308 | Centro Distribución | 2026-11-04   | Completado |                   4 |             18 |          233254.00
+       1 |       233 | Sede Norte Bogotá   | 2026-09-24   | Completado |                   4 |             15 |          212722.00
+       2 |       243 | Centro Distribución | 2026-08-04   | Completado |                   4 |             10 |          206748.00
+       3 |       253 | Sede Regional Cali  | 2026-10-13   | Completado |                   4 |             14 |          203930.00
+       1 |       153 | Sede Norte Bogotá   | 2026-11-08   | Completado |                   4 |             10 |          200904.00
+       2 |        28 | Centro Distribución | 2026-10-11   | Cancelado  |                   4 |             14 |          183476.00
+       4 |       143 | Sede Sur Bogotá     | 2026-08-30   | Completado |                   4 |             15 |          163048.00
+       3 |       198 | Sede Regional Cali  | 2026-09-21   | Completado |                   4 |             10 |          162918.00
+       5 |        72 | Sede Barranquilla   | 2026-08-17   | Pendiente  |                   3 |            197 |          680591.00
+       3 |       222 | Sede Regional Cali  | 2026-11-07   | Completado |                   3 |             24 |          619114.00
+       4 |       167 | Sede Sur Bogotá     | 2026-10-16   | Completado |                   3 |             21 |          570823.00
+       2 |       267 | Centro Distribución | 2026-09-20   | Completado |                   3 |             24 |          560674.00
+       5 |       312 | Sede Barranquilla   | 2026-08-03   | Pendiente  |                   3 |             24 |          543142.00
+       1 |        42 | Sede Norte Bogotá   | 2026-09-18   | Cancelado  |                   3 |             24 |          525610.00
+       2 |       212 | Centro Distribución | 2026-08-29   | Completado |                   3 |             21 |          519688.00
+       1 |       257 | Sede Norte Bogotá   | 2026-11-10   | Completado |                   3 |             21 |          509461.00
+       1 |       322 | Sede Norte Bogotá   | 2026-10-12   | Completado |                   3 |             18 |          509383.00
+       4 |        87 | Sede Sur Bogotá     | 2026-08-01   | Completado |                   3 |             24 |          508078.00
+       1 |        97 | Sede Norte Bogotá   | 2026-10-10   | Cancelado  |                   3 |             18 |          483085.00
+       5 |        32 | Sede Barranquilla   | 2026-11-08   | Completado |                   3 |             21 |          478780.00
+       3 |       157 | Sede Regional Cali  | 2026-08-07   | Completado |                   3 |             18 |          469936.00
+       1 |       202 | Sede Norte Bogotá   | 2026-10-19   | Completado |                   3 |             18 |          467014.00
+       3 |       277 | Sede Regional Cali  | 2026-07-31   | Completado |                   3 |             18 |          430489.00
+       3 |       302 | Sede Regional Cali  | 2026-09-23   | Cancelado  |                   3 |             21 |          417418.00
+       2 |       147 | Centro Distribución | 2026-09-27   | Completado |                   3 |             15 |          415801.00
+       3 |       102 | Sede Regional Cali  | 2026-11-14   | Completado |                   3 |             15 |          411418.00
+       2 |       132 | Centro Distribución | 2026-10-13   | Completado |                   3 |             24 |          408730.00
+       2 |        52 | Centro Distribución | 2026-07-29   | Pendiente  |                   3 |             18 |          404191.00
+       5 |       232 | Sede Barranquilla   | 2026-09-17   | Completado |                   3 |             18 |          392503.00
+       3 |        77 | Sede Regional Cali  | 2026-09-21   | Completado |                   3 |             21 |          386737.00
+       2 |       332 | Centro Distribución | 2026-08-22   | Completado |                   3 |             12 |          386503.00
+       4 |       247 | Sede Sur Bogotá     | 2026-09-01   | Cancelado  |                   3 |             18 |          382276.00
+       1 |       162 | Sede Norte Bogotá   | 2026-09-11   | Pendiente  |                   3 |            127 |          376831.00
+       2 |       107 | Centro Distribución | 2026-08-20   | Pendiente  |                   3 |             12 |          368971.00
+       2 |       347 | Centro Distribución | 2026-08-06   | Pendiente  |                   3 |             21 |          366283.00
+       4 |         7 | Sede Sur Bogotá     | 2026-09-15   | Cancelado  |                   3 |             18 |          366205.00
+       3 |        22 | Sede Regional Cali  | 2026-08-30   | Completado |                   3 |             18 |          355978.00
+       2 |        92 | Centro Distribución | 2026-09-05   | Completado |                   3 |             12 |          355822.00
+       1 |       177 | Sede Norte Bogotá   | 2026-08-26   | Completado |                   3 |             24 |          350290.00
+       2 |       292 | Centro Distribución | 2026-11-13   | Pendiente  |                   3 |             18 |          338446.00
+       5 |       192 | Sede Barranquilla   | 2026-08-10   | Cancelado  |                   3 |             15 |          338368.00
+       1 |       122 | Sede Norte Bogotá   | 2026-08-04   | Completado |                   3 |             21 |          335602.00
+       1 |       337 | Sede Norte Bogotá   | 2026-09-26   | Cancelado  |                   3 |             18 |          335524.00
+       1 |       242 | Sede Norte Bogotá   | 2026-07-28   | Completado |                   3 |             12 |          322219.00
+       2 |        67 | Centro Distribución | 2026-11-11   | Completado |                   3 |             18 |          312148.00
+       5 |       112 | Sede Barranquilla   | 2026-09-24   | Completado |                   3 |             18 |          309226.00
+       1 |       282 | Sede Norte Bogotá   | 2026-09-04   | Cancelado  |                   3 |             15 |          306226.00
+       1 |        17 | Sede Norte Bogotá   | 2026-11-24   | Completado |                   3 |             12 |          304687.00
+       3 |       237 | Sede Regional Cali  | 2026-10-22   | Pendiente  |                   3 |             15 |          301843.00
+       1 |       137 | Sede Norte Bogotá   | 2026-11-17   | Completado |                   3 |             12 |          285694.00
+       1 |        57 | Sede Norte Bogotá   | 2026-09-02   | Completado |                   3 |             15 |          284311.00
+       2 |        12 | Centro Distribución | 2026-10-20   | Completado |                   3 |             15 |          279928.00
+       2 |       187 | Centro Distribución | 2026-11-04   | Completado |                   3 |             18 |          272701.00
+       2 |       227 | Centro Distribución | 2026-08-13   | Cancelado  |                   3 |             12 |          268162.00
+       3 |       182 | Sede Regional Cali  | 2026-09-30   | Pendiente  |                   3 |             12 |          256474.00
+       1 |         2 | Sede Norte Bogotá   | 2026-08-11   | Completado |                   3 |             12 |          250630.00
+       2 |       307 | Centro Distribución | 2026-10-28   | Completado |                   3 |              9 |          237403.00
+       3 |       142 | Sede Regional Cali  | 2026-08-23   | Completado |                   3 |             18 |          234715.00
+       4 |       327 | Sede Sur Bogotá     | 2026-11-16   | Completado |                   3 |             15 |          228793.00
+       1 |        82 | Sede Norte Bogotá   | 2026-10-26   | Completado |                   3 |              9 |          224254.00
+       2 |       172 | Centro Distribución | 2026-11-20   | Cancelado  |                   3 |              9 |          221332.00
+       5 |       152 | Sede Barranquilla   | 2026-11-01   | Completado |                   3 |             12 |          217027.00
+       4 |       287 | Sede Sur Bogotá     | 2026-10-09   | Completado |                   3 |             12 |          211183.00
+       4 |       127 | Sede Sur Bogotá     | 2026-09-08   | Pendiente  |                   3 |              9 |          202339.00
+       5 |       272 | Sede Barranquilla   | 2026-10-25   | Completado |                   3 |             12 |          198034.00
+       3 |        62 | Sede Regional Cali  | 2026-10-07   | Cancelado  |                   3 |             12 |          193651.00
+       4 |        47 | Sede Sur Bogotá     | 2026-10-23   | Completado |                   3 |             12 |          180502.00
+       3 |       342 | Sede Regional Cali  | 2026-10-31   | Completado |                   3 |              6 |          174502.00
+       3 |       317 | Sede Regional Cali  | 2026-09-07   | Completado |                   3 |             12 |          168814.00
+       3 |       117 | Sede Regional Cali  | 2026-10-29   | Cancelado  |                   3 |              6 |          165736.00
+       1 |       217 | Sede Norte Bogotá   | 2026-10-03   | Pendiente  |                   3 |              9 |          158509.00
+       2 |        27 | Centro Distribución | 2026-10-04   | Completado |                   3 |              6 |          154048.00
+       1 |       297 | Sede Norte Bogotá   | 2026-08-19   | Completado |                   3 |              6 |          148204.00
+       3 |       262 | Sede Regional Cali  | 2026-08-16   | Completado |                   3 |              9 |          136594.00
+       3 |        37 | Sede Regional Cali  | 2026-08-14   | Completado |                   3 |              9 |          123445.00
+       2 |       252 | Centro Distribución | 2026-10-06   | Completado |                   3 |              6 |          121906.00
+       3 |       197 | Sede Regional Cali  | 2026-09-14   | Completado |                   3 |             12 |          105991.00
+       4 |       207 | Sede Sur Bogotá     | 2026-11-23   | Completado |                   3 |              6 |           95608.00
+(210 rows)
+
+=== CONSULTA 09: Pedidos antiguos sin completar (> 30 días respecto a 2026-11-30) ===
+ id_pedido |     nombre_sede     |       cliente        |       vendedor       | fecha_pedido | dias_antiguedad | total_registrado 
+-----------+---------------------+----------------------+----------------------+--------------+-----------------+------------------
+       121 | Sede Norte Bogotá   | Cliente 76 Apellido  | Empleado 16 Apellido | 2026-07-28   |             125 |        384529.00
+        52 | Centro Distribución | Cliente 28 Apellido  | Empleado 16 Apellido | 2026-07-29   |             124 |        404191.00
+        18 | Sede Norte Bogotá   | Cliente 10 Apellido  | Empleado 17 Apellido | 2026-08-02   |             120 |        585787.00
+       312 | Sede Barranquilla   | Cliente 88 Apellido  | Empleado 22 Apellido | 2026-08-03   |             119 |        543142.00
+       347 | Centro Distribución | Cliente 118 Apellido | Empleado 23 Apellido | 2026-08-06   |             116 |        366283.00
+       278 | Sede Regional Cali  | Cliente 70 Apellido  | Empleado 23 Apellido | 2026-08-07   |             115 |        544369.00
+       313 | Sede Norte Bogotá   | Cliente 100 Apellido | Empleado 11 Apellido | 2026-08-10   |             112 |        334115.00
+       244 | Centro Distribución | Cliente 52 Apellido  | Empleado 11 Apellido | 2026-08-11   |             111 |        338498.00
+       175 | Sede Sur Bogotá     | Cliente 4 Apellido   | Empleado 11 Apellido | 2026-08-12   |             110 |         58570.00
+       210 | Sede Norte Bogotá   | Cliente 34 Apellido  | Empleado 12 Apellido | 2026-08-15   |             107 |         87764.00
+       141 | Sede Regional Cali  | Cliente 106 Apellido | Empleado 12 Apellido | 2026-08-16   |             106 |        464014.00
+        72 | Sede Barranquilla   | Cliente 58 Apellido  | Empleado 12 Apellido | 2026-08-17   |             105 |        680591.00
+       107 | Centro Distribución | Cliente 88 Apellido  | Empleado 13 Apellido | 2026-08-20   |             102 |        368971.00
+        38 | Sede Regional Cali  | Cliente 40 Apellido  | Empleado 13 Apellido | 2026-08-21   |             101 |        291694.00
+        73 | Sede Norte Bogotá   | Cliente 70 Apellido  | Empleado 14 Apellido | 2026-08-24   |              98 |        367562.00
+         4 | Centro Distribución | Cliente 22 Apellido  | Empleado 14 Apellido | 2026-08-25   |              97 |        690989.00
+       333 | Sede Regional Cali  | Cliente 10 Apellido  | Empleado 20 Apellido | 2026-08-29   |              93 |        454167.00
+       264 | Sede Barranquilla   | Cliente 82 Apellido  | Empleado 20 Apellido | 2026-08-30   |              92 |        700112.00
+       299 | Centro Distribución | Cliente 112 Apellido | Empleado 21 Apellido | 2026-09-02   |              89 |        392198.00
+       230 | Sede Regional Cali  | Cliente 64 Apellido  | Empleado 21 Apellido | 2026-09-03   |              88 |         61518.00
+       265 | Sede Norte Bogotá   | Cliente 94 Apellido  | Empleado 22 Apellido | 2026-09-06   |              85 |        102400.00
+       196 | Centro Distribución | Cliente 46 Apellido  | Empleado 22 Apellido | 2026-09-07   |              84 |        152386.00
+       127 | Sede Sur Bogotá     | Cliente 118 Apellido | Empleado 22 Apellido | 2026-09-08   |              83 |        202339.00
+       162 | Sede Norte Bogotá   | Cliente 28 Apellido  | Empleado 23 Apellido | 2026-09-11   |              80 |        376831.00
+        93 | Sede Regional Cali  | Cliente 100 Apellido | Empleado 23 Apellido | 2026-09-12   |              79 |        326862.00
+        24 | Sede Barranquilla   | Cliente 52 Apellido  | Empleado 23 Apellido | 2026-09-13   |              78 |        609452.00
+        59 | Centro Distribución | Cliente 82 Apellido  | Empleado 11 Apellido | 2026-09-16   |              75 |        535532.00
+        25 | Sede Norte Bogotá   | Cliente 64 Apellido  | Empleado 12 Apellido | 2026-09-20   |              71 |        304096.00
+       319 | Sede Sur Bogotá     | Cliente 22 Apellido  | Empleado 17 Apellido | 2026-09-21   |              70 |        762578.00
+       285 | Sede Regional Cali  | Cliente 4 Apellido   | Empleado 18 Apellido | 2026-09-25   |              66 |         61544.00
+       216 | Sede Barranquilla   | Cliente 76 Apellido  | Empleado 18 Apellido | 2026-09-26   |              65 |        526692.00
+       251 | Centro Distribución | Cliente 106 Apellido | Empleado 19 Apellido | 2026-09-29   |              62 |        382555.00
+       182 | Sede Regional Cali  | Cliente 58 Apellido  | Empleado 19 Apellido | 2026-09-30   |              61 |        256474.00
+       217 | Sede Norte Bogotá   | Cliente 88 Apellido  | Empleado 20 Apellido | 2026-10-03   |              58 |        158509.00
+       148 | Centro Distribución | Cliente 40 Apellido  | Empleado 20 Apellido | 2026-10-04   |              57 |        636698.00
+        79 | Sede Sur Bogotá     | Cliente 112 Apellido | Empleado 20 Apellido | 2026-10-05   |              56 |        480293.00
+       114 | Sede Norte Bogotá   | Cliente 22 Apellido  | Empleado 21 Apellido | 2026-10-08   |              53 |        518870.00
+        45 | Sede Regional Cali  | Cliente 94 Apellido  | Empleado 21 Apellido | 2026-10-09   |              52 |        245355.00
+        11 | Centro Distribución | Cliente 76 Apellido  | Empleado 22 Apellido | 2026-10-13   |              48 |        179398.00
+       340 | Centro Distribución | Cliente 64 Apellido  | Empleado 15 Apellido | 2026-10-17   |              44 |         58648.00
+       271 | Sede Sur Bogotá     | Cliente 16 Apellido  | Empleado 15 Apellido | 2026-10-18   |              43 |         65875.00
+       306 | Sede Norte Bogotá   | Cliente 46 Apellido  | Empleado 16 Apellido | 2026-10-21   |              40 |        483122.00
+       237 | Sede Regional Cali  | Cliente 118 Apellido | Empleado 16 Apellido | 2026-10-22   |              39 |        301843.00
+       168 | Sede Barranquilla   | Cliente 70 Apellido  | Empleado 16 Apellido | 2026-10-23   |              38 |        405834.00
+       203 | Centro Distribución | Cliente 100 Apellido | Empleado 17 Apellido | 2026-10-26   |              35 |        689398.00
+       134 | Sede Regional Cali  | Cliente 52 Apellido  | Empleado 17 Apellido | 2026-10-27   |              34 |        489929.00
+       169 | Sede Norte Bogotá   | Cliente 82 Apellido  | Empleado 18 Apellido | 2026-10-30   |              31 |        272831.00
+(47 rows)
+
+=== CONSULTA 10: Demanda frente al inventario (subconsulta correlacionada + JOIN) ===
+ id_pedido |    nombre_sede     |   nombre_almacen    |    sku    |  producto  | cantidad_solicitada | existencia_actual | deficit_unidades 
+-----------+--------------------+---------------------+-----------+------------+---------------------+-------------------+------------------
+       306 | Sede Norte Bogotá  | Tienda Norte        | SKU-00003 | Producto 3 |                 186 |                82 |              104
+        45 | Sede Regional Cali | Tienda Cali         | SKU-00001 | Producto 1 |                 165 |               107 |               58
+        18 | Sede Norte Bogotá  | Tienda Norte        | SKU-00003 | Producto 3 |                 138 |                82 |               56
+       189 | Sede Regional Cali | Tienda Cali         | SKU-00001 | Producto 1 |                 149 |               107 |               42
+       162 | Sede Norte Bogotá  | Tienda Norte        | SKU-00003 | Producto 3 |                 122 |                82 |               40
+       333 | Sede Regional Cali | Tienda Cali         | SKU-00001 | Producto 1 |                 133 |               107 |               26
+        72 | Sede Barranquilla  | Tienda Barranquilla | SKU-00004 | Producto 4 |                 192 |               167 |               25
+       216 | Sede Barranquilla  | Tienda Barranquilla | SKU-00004 | Producto 4 |                 176 |               167 |                9
+(8 rows)
+
+=== CONSULTA 11: Cumplimiento de proveedores (CTE + LEFT JOIN) ===
+ id_proveedor |        razon_social        | total_ordenes | ordenes_recibidas | recibidas_a_tiempo | promedio_dias_retraso 
+--------------+----------------------------+---------------+-------------------+--------------------+-----------------------
+            9 | Proveedor Comercial 9 SAS  |             4 |                 3 |                  0 |                  5.33
+            3 | Proveedor Comercial 3 SAS  |             6 |                 4 |                  0 |                  4.00
+            6 | Proveedor Comercial 6 SAS  |             5 |                 4 |                  0 |                  3.75
+           12 | Proveedor Comercial 12 SAS |             5 |                 3 |                  0 |                  3.67
+            8 | Proveedor Comercial 8 SAS  |             4 |                 2 |                  1 |                  3.50
+            4 | Proveedor Comercial 4 SAS  |             4 |                 3 |                  2 |                  2.00
+            1 | Proveedor Comercial 1 SAS  |             5 |                 3 |                  2 |                  1.67
+           10 | Proveedor Comercial 10 SAS |             5 |                 3 |                  1 |                  1.67
+            5 | Proveedor Comercial 5 SAS  |             5 |                 3 |                  2 |                  1.00
+            2 | Proveedor Comercial 2 SAS  |             5 |                 3 |                  3 |                  0.00
+           11 | Proveedor Comercial 11 SAS |             4 |                 3 |                  3 |                  0.00
+            7 | Proveedor Comercial 7 SAS  |             4 |                 3 |                  3 |                  0.00
+(12 rows)
+
+=== CONSULTA 12: Compras pendientes de recibir (CTE + LEFT JOIN) ===
+ id_orden_compra |      estado      |         proveedor          |    sku    |  producto   | cantidad_solicitada | cantidad_recibida | pendiente_por_recibir 
+-----------------+------------------+----------------------------+-----------+-------------+---------------------+-------------------+-----------------------
+               1 | Pendiente        | Proveedor Comercial 1 SAS  | SKU-00001 | Producto 1  |                  18 |                 0 |                    18
+               1 | Pendiente        | Proveedor Comercial 1 SAS  | SKU-00038 | Producto 38 |                  55 |                 0 |                    55
+               2 | Recibida Parcial | Proveedor Comercial 2 SAS  | SKU-00002 | Producto 2  |                  26 |                13 |                    13
+               2 | Recibida Parcial | Proveedor Comercial 2 SAS  | SKU-00039 | Producto 39 |                  63 |                31 |                    32
+               5 | Pendiente        | Proveedor Comercial 5 SAS  | SKU-00005 | Producto 5  |                  50 |                 0 |                    50
+               5 | Pendiente        | Proveedor Comercial 5 SAS  | SKU-00042 | Producto 42 |                  87 |                 0 |                    87
+               6 | Recibida Parcial | Proveedor Comercial 6 SAS  | SKU-00006 | Producto 6  |                  58 |                29 |                    29
+               6 | Recibida Parcial | Proveedor Comercial 6 SAS  | SKU-00043 | Producto 43 |                  95 |                47 |                    48
+               9 | Recibida Parcial | Proveedor Comercial 9 SAS  | SKU-00009 | Producto 9  |                  82 |                41 |                    41
+               9 | Recibida Parcial | Proveedor Comercial 9 SAS  | SKU-00046 | Producto 46 |                 119 |                59 |                    60
+              12 | Pendiente        | Proveedor Comercial 12 SAS | SKU-00012 | Producto 12 |                 106 |                 0 |                   106
+              12 | Pendiente        | Proveedor Comercial 12 SAS | SKU-00049 | Producto 49 |                 143 |                 0 |                   143
+              15 | Pendiente        | Proveedor Comercial 3 SAS  | SKU-00015 | Producto 15 |                 130 |                 0 |                   130
+              15 | Pendiente        | Proveedor Comercial 3 SAS  | SKU-00052 | Producto 52 |                 167 |                 0 |                   167
+              16 | Recibida Parcial | Proveedor Comercial 4 SAS  | SKU-00016 | Producto 16 |                 138 |                69 |                    69
+              16 | Recibida Parcial | Proveedor Comercial 4 SAS  | SKU-00053 | Producto 53 |                 175 |                87 |                    88
+              18 | Pendiente        | Proveedor Comercial 6 SAS  | SKU-00018 | Producto 18 |                 154 |                 0 |                   154
+              18 | Pendiente        | Proveedor Comercial 6 SAS  | SKU-00055 | Producto 55 |                 191 |                 0 |                   191
+              19 | Recibida Parcial | Proveedor Comercial 7 SAS  | SKU-00019 | Producto 19 |                 162 |                81 |                    81
+              19 | Recibida Parcial | Proveedor Comercial 7 SAS  | SKU-00056 | Producto 56 |                 199 |                99 |                   100
+              22 | Pendiente        | Proveedor Comercial 10 SAS | SKU-00022 | Producto 22 |                 186 |                 0 |                   186
+              22 | Pendiente        | Proveedor Comercial 10 SAS | SKU-00059 | Producto 59 |                  33 |                 0 |                    33
+              23 | Recibida Parcial | Proveedor Comercial 11 SAS | SKU-00023 | Producto 23 |                 194 |                97 |                    97
+              23 | Recibida Parcial | Proveedor Comercial 11 SAS | SKU-00060 | Producto 60 |                  41 |                20 |                    21
+              25 | Recibida Parcial | Proveedor Comercial 1 SAS  | SKU-00025 | Producto 25 |                  20 |                10 |                    10
+              25 | Recibida Parcial | Proveedor Comercial 1 SAS  | SKU-00062 | Producto 62 |                  57 |                28 |                    29
+              28 | Pendiente        | Proveedor Comercial 4 SAS  | SKU-00028 | Producto 28 |                  44 |                 0 |                    44
+              28 | Pendiente        | Proveedor Comercial 4 SAS  | SKU-00065 | Producto 65 |                  81 |                 0 |                    81
+              29 | Recibida Parcial | Proveedor Comercial 5 SAS  | SKU-00029 | Producto 29 |                  52 |                26 |                    26
+              29 | Recibida Parcial | Proveedor Comercial 5 SAS  | SKU-00066 | Producto 66 |                  89 |                44 |                    45
+              32 | Pendiente        | Proveedor Comercial 8 SAS  | SKU-00032 | Producto 32 |                  76 |                 0 |                    76
+              32 | Pendiente        | Proveedor Comercial 8 SAS  | SKU-00069 | Producto 69 |                 113 |                 0 |                   113
+              35 | Pendiente        | Proveedor Comercial 11 SAS | SKU-00035 | Producto 35 |                 100 |                 0 |                   100
+              35 | Pendiente        | Proveedor Comercial 11 SAS | SKU-00072 | Producto 72 |                 137 |                 0 |                   137
+              36 | Recibida Parcial | Proveedor Comercial 12 SAS | SKU-00036 | Producto 36 |                 108 |                54 |                    54
+              36 | Recibida Parcial | Proveedor Comercial 12 SAS | SKU-00073 | Producto 73 |                 145 |                72 |                    73
+              38 | Pendiente        | Proveedor Comercial 2 SAS  | SKU-00038 | Producto 38 |                 124 |                 0 |                   124
+              38 | Pendiente        | Proveedor Comercial 2 SAS  | SKU-00075 | Producto 75 |                 161 |                 0 |                   161
+              39 | Recibida Parcial | Proveedor Comercial 3 SAS  | SKU-00039 | Producto 39 |                 132 |                66 |                    66
+              39 | Recibida Parcial | Proveedor Comercial 3 SAS  | SKU-00076 | Producto 76 |                 169 |                84 |                    85
+              41 | Pendiente        | Proveedor Comercial 5 SAS  | SKU-00041 | Producto 41 |                 148 |                 0 |                   148
+              41 | Pendiente        | Proveedor Comercial 5 SAS  | SKU-00078 | Producto 78 |                 185 |                 0 |                   185
+              42 | Recibida Parcial | Proveedor Comercial 6 SAS  | SKU-00042 | Producto 42 |                 156 |                78 |                    78
+              42 | Recibida Parcial | Proveedor Comercial 6 SAS  | SKU-00079 | Producto 79 |                 193 |                96 |                    97
+              45 | Pendiente        | Proveedor Comercial 9 SAS  | SKU-00045 | Producto 45 |                 180 |                 0 |                   180
+              45 | Pendiente        | Proveedor Comercial 9 SAS  | SKU-00082 | Producto 82 |                  27 |                 0 |                    27
+              46 | Recibida Parcial | Proveedor Comercial 10 SAS | SKU-00046 | Producto 46 |                 188 |                94 |                    94
+              46 | Recibida Parcial | Proveedor Comercial 10 SAS | SKU-00083 | Producto 83 |                  35 |                17 |                    18
+              51 | Pendiente        | Proveedor Comercial 3 SAS  | SKU-00051 | Producto 51 |                  38 |                 0 |                    38
+              51 | Pendiente        | Proveedor Comercial 3 SAS  | SKU-00088 | Producto 88 |                  75 |                 0 |                    75
+              52 | Recibida Parcial | Proveedor Comercial 4 SAS  | SKU-00052 | Producto 52 |                  46 |                23 |                    23
+              52 | Recibida Parcial | Proveedor Comercial 4 SAS  | SKU-00089 | Producto 89 |                  83 |                41 |                    42
+              55 | Pendiente        | Proveedor Comercial 7 SAS  | SKU-00055 | Producto 55 |                  70 |                 0 |                    70
+              55 | Pendiente        | Proveedor Comercial 7 SAS  | SKU-00092 | Producto 92 |                 107 |                 0 |                   107
+              56 | Recibida Parcial | Proveedor Comercial 8 SAS  | SKU-00056 | Producto 56 |                  78 |                39 |                    39
+              56 | Recibida Parcial | Proveedor Comercial 8 SAS  | SKU-00093 | Producto 93 |                 115 |                57 |                    58
+              58 | Pendiente        | Proveedor Comercial 10 SAS | SKU-00058 | Producto 58 |                  94 |                 0 |                    94
+              58 | Pendiente        | Proveedor Comercial 10 SAS | SKU-00095 | Producto 95 |                 131 |                 0 |                   131
+              59 | Recibida Parcial | Proveedor Comercial 11 SAS | SKU-00059 | Producto 59 |                 102 |                51 |                    51
+              59 | Recibida Parcial | Proveedor Comercial 11 SAS | SKU-00096 | Producto 96 |                 139 |                69 |                    70
+              61 | Pendiente        | Proveedor Comercial 1 SAS  | SKU-00061 | Producto 61 |                 118 |                 0 |                   118
+              61 | Pendiente        | Proveedor Comercial 1 SAS  | SKU-00098 | Producto 98 |                 155 |                 0 |                   155
+              62 | Recibida Parcial | Proveedor Comercial 2 SAS  | SKU-00062 | Producto 62 |                 126 |                63 |                    63
+              62 | Recibida Parcial | Proveedor Comercial 2 SAS  | SKU-00099 | Producto 99 |                 163 |                81 |                    82
+              65 | Recibida Parcial | Proveedor Comercial 5 SAS  | SKU-00002 | Producto 2  |                  87 |                43 |                    44
+              65 | Recibida Parcial | Proveedor Comercial 5 SAS  | SKU-00065 | Producto 65 |                 150 |                75 |                    75
+              68 | Pendiente        | Proveedor Comercial 8 SAS  | SKU-00005 | Producto 5  |                 111 |                 0 |                   111
+              68 | Pendiente        | Proveedor Comercial 8 SAS  | SKU-00068 | Producto 68 |                 174 |                 0 |                   174
+              69 | Recibida Parcial | Proveedor Comercial 9 SAS  | SKU-00006 | Producto 6  |                 119 |                59 |                    60
+              69 | Recibida Parcial | Proveedor Comercial 9 SAS  | SKU-00069 | Producto 69 |                 182 |                91 |                    91
+              72 | Pendiente        | Proveedor Comercial 12 SAS | SKU-00009 | Producto 9  |                 143 |                 0 |                   143
+              72 | Pendiente        | Proveedor Comercial 12 SAS | SKU-00072 | Producto 72 |                  16 |                 0 |                    16
+              74 | Pendiente        | Proveedor Comercial 2 SAS  | SKU-00011 | Producto 11 |                 159 |                 0 |                   159
+              74 | Pendiente        | Proveedor Comercial 2 SAS  | SKU-00074 | Producto 74 |                  32 |                 0 |                    32
+              75 | Recibida Parcial | Proveedor Comercial 3 SAS  | SKU-00012 | Producto 12 |                 167 |                83 |                    84
+              75 | Recibida Parcial | Proveedor Comercial 3 SAS  | SKU-00075 | Producto 75 |                  40 |                20 |                    20
+(76 rows)
+
+=== CONSULTA 13: Transferencias en tránsito (corte 2026-11-30) ===
+ id_transferencia |                   origen                    |                 destino                 | fecha_solicitud | fecha_despacho | dias_transcurridos |         productos_en_transito          
+------------------+---------------------------------------------+-----------------------------------------+-----------------+----------------+--------------------+----------------------------------------
+                2 | Tienda Norte (Sede Norte Bogotá)            | Tienda Cali (Sede Regional Cali)        | 2026-08-11      | 2026-08-14     |                108 | SKU-00002 (16 uds), SKU-00052 (66 uds)
+                6 | Almacén Principal Cali (Sede Regional Cali) | Tienda Cali (Sede Regional Cali)        | 2026-08-23      | 2026-08-24     |                 98 | SKU-00006 (32 uds), SKU-00056 (82 uds)
+                9 | Almacén Principal Norte (Sede Norte Bogotá) | Bodega Secundaria (Centro Distribución) | 2026-09-01      | 2026-09-02     |                 89 | SKU-00009 (44 uds), SKU-00059 (94 uds)
+               13 | Tienda Cali (Sede Regional Cali)            | Bodega Secundaria (Centro Distribución) | 2026-09-13      | 2026-09-15     |                 76 | SKU-00013 (60 uds), SKU-00063 (20 uds)
+               20 | Bodega Secundaria (Centro Distribución)     | Bodega Central (Centro Distribución)    | 2026-10-04      | 2026-10-07     |                 54 | SKU-00020 (88 uds), SKU-00070 (48 uds)
+               24 | Tienda Barranquilla (Sede Barranquilla)     | Bodega Secundaria (Centro Distribución) | 2026-10-16      | 2026-10-17     |                 44 | SKU-00024 (14 uds), SKU-00074 (64 uds)
+               27 | Bodega Central (Centro Distribución)        | Tienda Norte (Sede Norte Bogotá)        | 2026-10-25      | 2026-10-26     |                 35 | SKU-00027 (26 uds), SKU-00077 (76 uds)
+(7 rows)
+
+=== CONSULTA 14: Diferencias entre enviado y recibido en transferencias ===
+ id_transferencia | fecha_recepcion |     almacen_origen      |    almacen_destino     |    sku    |  producto   | cantidad_enviada | cantidad_recibida | diferencia_unidades 
+------------------+-----------------+-------------------------+------------------------+-----------+-------------+------------------+-------------------+---------------------
+               14 | 2026-09-23      | Almacén Principal Cali  | Tienda Sur             | SKU-00064 | Producto 64 |               24 |                19 |                   5
+                3 | 2026-08-20      | Bodega Central          | Tienda Sur             | SKU-00003 | Producto 3  |               20 |                16 |                   4
+               17 | 2026-10-01      | Almacén Principal Norte | Tienda Cali            | SKU-00067 | Producto 67 |               36 |                33 |                   3
+               21 | 2026-10-11      | Tienda Cali             | Almacén Principal Cali | SKU-00021 | Producto 21 |               92 |                90 |                   2
+(4 rows)
+
+=== CONSULTA 15: Redistribución de productos entre sedes (CTE excedente vs faltante) ===
+ id_producto |    sku    |  producto   | sede_con_excedente  | excedente_disponible | sede_con_faltante  | faltante_requerido 
+-------------+-----------+-------------+---------------------+----------------------+--------------------+--------------------
+          46 | SKU-00046 | Producto 46 | Centro Distribución |                  306 | Sede Regional Cali |                 20
+           2 | SKU-00002 | Producto 2  | Sede Barranquilla   |                  133 | Sede Norte Bogotá  |                 20
+           2 | SKU-00002 | Producto 2  | Sede Regional Cali  |                  107 | Sede Norte Bogotá  |                 20
+          68 | SKU-00068 | Producto 68 | Sede Regional Cali  |                   29 | Sede Sur Bogotá    |                 20
+          45 | SKU-00045 | Producto 45 | Centro Distribución |                  304 | Sede Regional Cali |                 19
+           1 | SKU-00001 | Producto 1  | Sede Barranquilla   |                  127 | Sede Norte Bogotá  |                 19
+           1 | SKU-00001 | Producto 1  | Sede Regional Cali  |                   88 | Sede Norte Bogotá  |                 19
+          67 | SKU-00067 | Producto 67 | Sede Regional Cali  |                   23 | Sede Sur Bogotá    |                 19
+          48 | SKU-00048 | Producto 48 | Centro Distribución |                  310 | Sede Regional Cali |                 13
+          47 | SKU-00047 | Producto 47 | Centro Distribución |                  308 | Sede Regional Cali |                 13
+           5 | SKU-00005 | Producto 5  | Centro Distribución |                  180 | Sede Norte Bogotá  |                 13
+           4 | SKU-00004 | Producto 4  | Centro Distribución |                  161 | Sede Norte Bogotá  |                 13
+           5 | SKU-00005 | Producto 5  | Sede Barranquilla   |                  151 | Sede Norte Bogotá  |                 13
+           4 | SKU-00004 | Producto 4  | Sede Barranquilla   |                  145 | Sede Norte Bogotá  |                 13
+          70 | SKU-00070 | Producto 70 | Sede Regional Cali  |                   41 | Sede Sur Bogotá    |                 13
+          69 | SKU-00069 | Producto 69 | Sede Regional Cali  |                   35 | Sede Sur Bogotá    |                 13
+(16 rows)
+
+=== CONSULTA 16: Productos de baja rotación (stock > 0 sin ventas confirmadas 90 días antes de 2026-11-30, NOT EXISTS) ===
+ id_producto |    sku    |  producto   | nombre_categoria | existencia_total | ultima_actualizacion_stock 
+-------------+-----------+-------------+------------------+------------------+----------------------------
+          91 | SKU-00091 | Producto 91 | Bebidas          |              210 | 2026-09-11
+          89 | SKU-00089 | Producto 89 | Papelería        |              195 | 2026-08-18
+          90 | SKU-00090 | Producto 90 | Abarrotes        |              190 | 2026-08-30
+          88 | SKU-00088 | Producto 88 | Lácteos          |              175 | 2026-08-06
+          87 | SKU-00087 | Producto 87 | Aseo             |              130 | 2026-11-18
+          86 | SKU-00086 | Producto 86 | Snacks           |              110 | 2026-11-06
+          93 | SKU-00093 | Producto 93 | Aseo             |               70 | 2026-10-05
+          92 | SKU-00092 | Producto 92 | Snacks           |               50 | 2026-09-23
+(8 rows)
+
+=== CONSULTA 17A: Devoluciones por producto (CTEs separadas) ===
+ id_producto |    sku    |  producto   | categoria | unidades_vendidas | cantidad_devoluciones | unidades_devueltas | porcentaje_devolucion 
+-------------+-----------+-------------+-----------+-------------------+-----------------------+--------------------+-----------------------
+           2 | SKU-00002 | Producto 2  | Snacks    |                31 |                     2 |                  2 |                  6.45
+          26 | SKU-00026 | Producto 26 | Snacks    |                20 |                     1 |                  1 |                  5.00
+          14 | SKU-00014 | Producto 14 | Snacks    |                24 |                     1 |                  1 |                  4.17
+          11 | SKU-00011 | Producto 11 | Papelería |                29 |                     1 |                  1 |                  3.45
+          25 | SKU-00025 | Producto 25 | Bebidas   |                60 |                     2 |                  2 |                  3.33
+           7 | SKU-00007 | Producto 7  | Bebidas   |                63 |                     2 |                  2 |                  3.17
+          19 | SKU-00019 | Producto 19 | Bebidas   |                65 |                     2 |                  2 |                  3.08
+          27 | SKU-00027 | Producto 27 | Aseo      |                37 |                     1 |                  1 |                  2.70
+          16 | SKU-00016 | Producto 16 | Lácteos   |                75 |                     2 |                  2 |                  2.67
+          24 | SKU-00024 | Producto 24 | Abarrotes |                38 |                     1 |                  1 |                  2.63
+          12 | SKU-00012 | Producto 12 | Abarrotes |                39 |                     1 |                  1 |                  2.56
+           3 | SKU-00003 | Producto 3  | Aseo      |                41 |                     1 |                  1 |                  2.44
+           4 | SKU-00004 | Producto 4  | Lácteos   |                49 |                     1 |                  1 |                  2.04
+          46 | SKU-00046 | Producto 46 | Lácteos   |                50 |                     1 |                  1 |                  2.00
+          15 | SKU-00015 | Producto 15 | Aseo      |                53 |                     1 |                  1 |                  1.89
+          61 | SKU-00061 | Producto 61 | Bebidas   |                55 |                     1 |                  1 |                  1.82
+          31 | SKU-00031 | Producto 31 | Bebidas   |                58 |                     1 |                  1 |                  1.72
+          13 | SKU-00013 | Producto 13 | Bebidas   |                67 |                     1 |                  1 |                  1.49
+          49 | SKU-00049 | Producto 49 | Bebidas   |                67 |                     1 |                  1 |                  1.49
+          10 | SKU-00010 | Producto 10 | Lácteos   |                72 |                     1 |                  1 |                  1.39
+(20 rows)
+
+=== CONSULTA 17B: Devoluciones consolidadas por categoría (CTEs separadas) ===
+ id_categoria | categoria | unidades_vendidas | cantidad_devoluciones | unidades_devueltas | porcentaje_devolucion 
+--------------+-----------+-------------------+-----------------------+--------------------+-----------------------
+            1 | Bebidas   |               830 |                    10 |                 10 |                  1.20
+            2 | Snacks    |               370 |                     4 |                  4 |                  1.08
+            4 | Lácteos   |               801 |                     5 |                  5 |                  0.62
+            3 | Aseo      |               586 |                     3 |                  3 |                  0.51
+            6 | Abarrotes |               583 |                     2 |                  2 |                  0.34
+            5 | Papelería |               349 |                     1 |                  1 |                  0.29
+(6 rows)
+
+=== CONSULTA 18A: Comparación de surtido — Productos en Sede 1 pero NO en Sede 3 (EXCEPT) ===
+ id_producto |    sku    |   nombre    
+-------------+-----------+-------------
+           3 | SKU-00003 | Producto 3
+           4 | SKU-00004 | Producto 4
+           5 | SKU-00005 | Producto 5
+           6 | SKU-00006 | Producto 6
+           7 | SKU-00007 | Producto 7
+           8 | SKU-00008 | Producto 8
+           9 | SKU-00009 | Producto 9
+          10 | SKU-00010 | Producto 10
+          13 | SKU-00013 | Producto 13
+          14 | SKU-00014 | Producto 14
+          15 | SKU-00015 | Producto 15
+          16 | SKU-00016 | Producto 16
+          17 | SKU-00017 | Producto 17
+          18 | SKU-00018 | Producto 18
+          19 | SKU-00019 | Producto 19
+          20 | SKU-00020 | Producto 20
+          21 | SKU-00021 | Producto 21
+          22 | SKU-00022 | Producto 22
+          23 | SKU-00023 | Producto 23
+          24 | SKU-00024 | Producto 24
+          25 | SKU-00025 | Producto 25
+          26 | SKU-00026 | Producto 26
+          86 | SKU-00086 | Producto 86
+          87 | SKU-00087 | Producto 87
+(24 rows)
+
+=== CONSULTA 18B: Comparación de surtido — Productos comunes entre Sede 1 y Sede 3 (INTERSECT) ===
+ id_producto |    sku    |   nombre    
+-------------+-----------+-------------
+           1 | SKU-00001 | Producto 1
+           2 | SKU-00002 | Producto 2
+          11 | SKU-00011 | Producto 11
+          12 | SKU-00012 | Producto 12
+(4 rows)
+
+=== CONSULTA 19: Clasificación de vendedores por sede (CTE + RANK) ===
+ id_sede |     nombre_sede     | puesto_en_sede | id_empleado |       vendedor       | pedidos_completados | total_vendido 
+---------+---------------------+----------------+-------------+----------------------+---------------------+---------------
+       1 | Sede Norte Bogotá   |              1 |          20 | Empleado 20 Apellido |                   5 |    2450879.00
+       1 | Sede Norte Bogotá   |              2 |          12 | Empleado 12 Apellido |                   5 |    2045383.00
+       1 | Sede Norte Bogotá   |              3 |          21 | Empleado 21 Apellido |                   6 |    1917912.00
+       1 | Sede Norte Bogotá   |              4 |          16 | Empleado 16 Apellido |                   5 |    1793188.00
+       1 | Sede Norte Bogotá   |              5 |          13 | Empleado 13 Apellido |                   5 |    1687483.00
+       1 | Sede Norte Bogotá   |              6 |          22 | Empleado 22 Apellido |                   5 |    1604076.00
+       1 | Sede Norte Bogotá   |              7 |          15 | Empleado 15 Apellido |                   4 |    1450463.00
+       1 | Sede Norte Bogotá   |              8 |          17 | Empleado 17 Apellido |                   4 |    1414016.00
+       1 | Sede Norte Bogotá   |              9 |          19 | Empleado 19 Apellido |                   4 |    1203710.00
+       1 | Sede Norte Bogotá   |             10 |          14 | Empleado 14 Apellido |                   4 |    1160542.00
+       1 | Sede Norte Bogotá   |             11 |          11 | Empleado 11 Apellido |                   4 |    1120757.00
+       1 | Sede Norte Bogotá   |             12 |          23 | Empleado 23 Apellido |                   4 |    1011286.00
+       1 | Sede Norte Bogotá   |             13 |          18 | Empleado 18 Apellido |                   4 |     995981.00
+       2 | Centro Distribución |              1 |          18 | Empleado 18 Apellido |                   5 |    2155322.00
+       2 | Centro Distribución |              2 |          19 | Empleado 19 Apellido |                   5 |    1891432.00
+       2 | Centro Distribución |              3 |          13 | Empleado 13 Apellido |                   5 |    1665646.00
+       2 | Centro Distribución |              4 |          23 | Empleado 23 Apellido |                   5 |    1660932.00
+       2 | Centro Distribución |              5 |          14 | Empleado 14 Apellido |                   5 |    1546967.00
+       2 | Centro Distribución |              6 |          11 | Empleado 11 Apellido |                   5 |    1480891.00
+       2 | Centro Distribución |              7 |          15 | Empleado 15 Apellido |                   4 |    1384874.00
+       2 | Centro Distribución |              8 |          21 | Empleado 21 Apellido |                   4 |    1302746.00
+       2 | Centro Distribución |              9 |          17 | Empleado 17 Apellido |                   4 |    1262299.00
+       2 | Centro Distribución |             10 |          22 | Empleado 22 Apellido |                   4 |    1176048.00
+       2 | Centro Distribución |             11 |          12 | Empleado 12 Apellido |                   4 |    1127478.00
+       2 | Centro Distribución |             12 |          20 | Empleado 20 Apellido |                   4 |    1007825.00
+       2 | Centro Distribución |             13 |          16 | Empleado 16 Apellido |                   4 |     976709.00
+       3 | Sede Regional Cali  |              1 |          16 | Empleado 16 Apellido |                   6 |    2190107.00
+       3 | Sede Regional Cali  |              2 |          12 | Empleado 12 Apellido |                   5 |    1780422.00
+       3 | Sede Regional Cali  |              3 |          11 | Empleado 11 Apellido |                   5 |    1773942.00
+       3 | Sede Regional Cali  |              4 |          17 | Empleado 17 Apellido |                   5 |    1762786.00
+       3 | Sede Regional Cali  |              5 |          21 | Empleado 21 Apellido |                   5 |    1647809.00
+       3 | Sede Regional Cali  |              6 |          15 | Empleado 15 Apellido |                   5 |    1397484.00
+       3 | Sede Regional Cali  |              7 |          20 | Empleado 20 Apellido |                   4 |    1359907.00
+       3 | Sede Regional Cali  |              8 |          13 | Empleado 13 Apellido |                   4 |    1235696.00
+       3 | Sede Regional Cali  |              9 |          19 | Empleado 19 Apellido |                   4 |    1173204.00
+       3 | Sede Regional Cali  |             10 |          23 | Empleado 23 Apellido |                   4 |    1157237.00
+       3 | Sede Regional Cali  |             11 |          22 | Empleado 22 Apellido |                   4 |    1089206.00
+       3 | Sede Regional Cali  |             12 |          18 | Empleado 18 Apellido |                   4 |    1047863.00
+       3 | Sede Regional Cali  |             13 |          14 | Empleado 14 Apellido |                   4 |     941132.00
+       4 | Sede Sur Bogotá     |              1 |          22 | Empleado 22 Apellido |                   3 |    1188554.00
+       4 | Sede Sur Bogotá     |              2 |          13 | Empleado 13 Apellido |                   3 |    1001033.00
+       4 | Sede Sur Bogotá     |              3 |          14 | Empleado 14 Apellido |                   2 |     819330.00
+       4 | Sede Sur Bogotá     |              4 |          15 | Empleado 15 Apellido |                   2 |     806791.00
+       4 | Sede Sur Bogotá     |              5 |          18 | Empleado 18 Apellido |                   2 |     786850.00
+       4 | Sede Sur Bogotá     |              6 |          20 | Empleado 20 Apellido |                   2 |     730897.00
+       4 | Sede Sur Bogotá     |              7 |          19 | Empleado 19 Apellido |                   2 |     730209.00
+       4 | Sede Sur Bogotá     |              8 |          11 | Empleado 11 Apellido |                   2 |     679041.00
+       4 | Sede Sur Bogotá     |              9 |          16 | Empleado 16 Apellido |                   2 |     674327.00
+       4 | Sede Sur Bogotá     |             10 |          12 | Empleado 12 Apellido |                   2 |     655821.00
+       4 | Sede Sur Bogotá     |             11 |          17 | Empleado 17 Apellido |                   2 |     497695.00
+       4 | Sede Sur Bogotá     |             12 |          21 | Empleado 21 Apellido |                   2 |     270779.00
+       4 | Sede Sur Bogotá     |             13 |          23 | Empleado 23 Apellido |                   2 |     203982.00
+       5 | Sede Barranquilla   |              1 |          21 | Empleado 21 Apellido |                   2 |    1347212.00
+       5 | Sede Barranquilla   |              2 |          14 | Empleado 14 Apellido |                   3 |    1276091.00
+       5 | Sede Barranquilla   |              3 |          19 | Empleado 19 Apellido |                   3 |    1226131.00
+       5 | Sede Barranquilla   |              4 |          22 | Empleado 22 Apellido |                   2 |     916243.00
+       5 | Sede Barranquilla   |              5 |          15 | Empleado 15 Apellido |                   2 |     915983.00
+       5 | Sede Barranquilla   |              6 |          23 | Empleado 23 Apellido |                   2 |     841985.00
+       5 | Sede Barranquilla   |              7 |          16 | Empleado 16 Apellido |                   2 |     717696.00
+       5 | Sede Barranquilla   |              8 |          18 | Empleado 18 Apellido |                   3 |     695963.00
+       5 | Sede Barranquilla   |              9 |          17 | Empleado 17 Apellido |                   2 |     567648.00
+       5 | Sede Barranquilla   |             10 |          13 | Empleado 13 Apellido |                   2 |     535889.00
+       5 | Sede Barranquilla   |             11 |          11 | Empleado 11 Apellido |                   2 |     382406.00
+       5 | Sede Barranquilla   |             12 |          20 | Empleado 20 Apellido |                   2 |     312557.00
+       5 | Sede Barranquilla   |             13 |          12 | Empleado 12 Apellido |                   2 |     273110.00
+(65 rows)
+
+=== CONSULTA 20: Consolidado corporativo por sede (CTEs agregadas sin duplicación) ===
+ id_sede |     nombre_sede     |  tipo_sede   | estado_sede | total_productos_activos | productos_en_inventario | unidades_inventario | valor_inventario | alertas_stock | pedidos_completados | pedidos_pendientes | monto_ventas_completadas | total_ordenes_compra | ordenes_compra_pendientes | transferencias_emitidas | transferencias_en_transito 
+---------+---------------------+--------------+-------------+-------------------------+-------------------------+---------------------+------------------+---------------+---------------------+--------------------+--------------------------+----------------------+---------------------------+-------------------------+----------------------------
+       1 | Sede Norte Bogotá   | Ventas       | Activo      |                      95 |                      28 |                3091 |      33700898.00 |             8 |                  59 |                 14 |              19855676.00 |                   20 |                        10 |                       8 |                          2
+       2 | Centro Distribución | Distribución | Activo      |                      95 |                      32 |                9764 |     180120009.00 |             0 |                  58 |                 16 |              18639169.00 |                   19 |                        10 |                       8 |                          2
+       3 | Sede Regional Cali  | Regional     | Activo      |                      95 |                      32 |                3777 |     103395772.00 |             8 |                  59 |                 14 |              18556795.00 |                   18 |                        10 |                       8 |                          2
+       4 | Sede Sur Bogotá     | Ventas       | Activo      |                      95 |                      18 |                1476 |      50633293.00 |             5 |                  28 |                  7 |               9045309.00 |                    9 |                         4 |                       3 |                          0
+       5 | Sede Barranquilla   | Ventas       | Activo      |                      95 |                      17 |                2805 |      56058450.00 |             0 |                  29 |                  7 |              10008914.00 |                    9 |                         4 |                       3 |                          1
+(5 rows)
+

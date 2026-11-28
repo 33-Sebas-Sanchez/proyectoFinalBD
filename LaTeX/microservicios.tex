@@ -205,8 +205,8 @@
       font=\sffamily\itshape\fontsize{12.2}{15}\selectfont]
   at (0.9,22.26)
   {Clientes y API Gateway conceptuales\enspace\textperiodcentered\enspace
-   6 microservicios de dominio\enspace\textperiodcentered\enspace
-   6 esquemas PostgreSQL aislados por RBAC\enspace\textperiodcentered\enspace
+   6 microservicios Spring Boot\enspace\textperiodcentered\enspace
+   6 bases PostgreSQL independientes (RBAC)\enspace\textperiodcentered\enspace
    Fragmentaci\'on LIST por \texttt{id\_sede}};
 
 \draw[linea, line width=0.8pt] (0.9,21.75) -- (38.1,21.75);
@@ -236,7 +236,7 @@
 \draw[panel=cCat] (26.00,2.25) rectangle (38.15,21.25);
 \node[anchor=north, text=cCat!85!black,
       font=\sffamily\bfseries\fontsize{11}{13}\selectfont, align=center]
-  at (32.075,20.92) {POSTGRESQL\enspace·\enspace INSTANCIA \'UNICA (SIMULACI\'ON ACAD\'EMICA)\\{\fontsize{9}{11}\selectfont\mdseries\itshape(un esquema por microservicio, aislamiento RBAC y fragmentaci\'on por sede)}};
+  at (32.075,20.92) {POSTGRESQL\enspace·\enspace BASES POR MICROSERVICIO\\{\fontsize{9}{11}\selectfont\mdseries\itshape(aislamiento RBAC, particiones LIST e integraci\'on postgres\_fdw)}};
 
 % ====================================================================
 % CAPA 1: CLIENTES (Columna izquierda)
@@ -334,27 +334,27 @@
 % ====================================================================
 \service{svcCat}{14.65}{18.70}{cCat}{01}{Cat\'alogo y Terceros}
   {sedes\sep almacenes\sep categor\'ias\sep productos\\proveedores\sep clientes\sep suministro M:N}
-  {rol\_admin}
+  {rol\_catalogo\_admin}
 
 \service{svcCom}{14.65}{15.70}{cCom}{02}{Compras y Abastecimiento}
   {\'ordenes de compra y su detalle\\recepciones parciales o totales}
-  {rol\_compras}
+  {rol\_compras\_admin}
 
 \service{svcInv}{14.65}{12.70}{cInv}{03}{Inventarios y Transferencias}
   {existencias por sede y almac\'en\\traslados entre bodegas y su detalle}
-  {rol\_inventario}
+  {rol\_inventario\_admin}
 
 \service{svcVen}{14.65}{9.70}{cVen}{04}{Ventas y Pagos}
   {pedidos de venta por sede y detalle\\recaudo de pagos y devoluciones}
-  {rol\_vendedor}
+  {rol\_ventas\_admin}
 
 \service{svcIde}{14.65}{6.70}{cIde}{05}{Identidad y Accesos}
   {empleados\sep cuentas de usuario (1:1)\\auditor\'ia de accesos (solo inserci\'on)}
-  {rol\_admin}
+  {rol\_identidad\_admin}
 
 \service{svcRep}{14.65}{3.70}{cRep}{06}{Reportes Corporativos}
-  {consolidaci\'on multi-sede y multi-esquema\\consultas y vistas de solo lectura}
-  {Gerencia / Auditor\'ia}
+  {consolidaci\'on multi-sede y multi-base\\10 vistas obligatorias + 2 UNION ALL}
+  {rol\_reportes\_admin}
 
 % Bus REST API desde API Gateway hacia los 6 microservicios
 \draw[acento2!80, line width=1.4pt] (gw.east) -- (13.65,11.20);
@@ -423,10 +423,10 @@
   {3 tablas\enspace·\enspace sin UPDATE/DELETE en auditor\'ia}{}
 
 \dbschema{dbRep}{26.40}{3.70}{cRep}{reportes}
-  {10 vistas consolidadas (\texttt{SELECT} / \texttt{UNION ALL} / CTE)}
-  {0 tablas propias\enspace·\enspace solo lectura}{Solo lectura}
+  {12 vistas (\texttt{10} obligatorias + \texttt{2 UNION ALL} de fragmentos)}
+  {0 tablas propias\enspace·\enspace postgres\_fdw lectura}{Solo lectura}
 
-% Conexiones Microservicio -> Su propio Esquema PostgreSQL (propiedad estricta)
+% Conexiones Microservicio -> Su propia base PostgreSQL (propiedad estricta)
 \foreach \svc/\db/\yc/\lbl in {
   svcCat/dbCat/18.70/CRUD,
   svcCom/dbCom/15.70/CRUD,
@@ -439,7 +439,7 @@
   \node[rotulo] at (25.30,\yc) {\lbl};
 }
 
-% Bus de consolidacion de solo lectura hacia esquema reportes (x = 36.45)
+% Bus de consolidacion de solo lectura hacia base reportes (x = 36.45)
 \draw[grisClaro, line width=1.25pt, dash pattern=on 4.5pt off 3pt]
   (36.45,18.70) -- (36.45,3.70);
 \foreach \db/\yc in {
@@ -449,7 +449,7 @@
 }
 \draw[flujoDash] (36.45,3.70) -- (dbRep.east);
 \node[rotulo, rotate=90] at (37.30,11.20)
-  {Vistas \texttt{SELECT} / \texttt{UNION ALL} sobre los 5 esquemas};
+  {Vistas \texttt{SELECT} / \texttt{UNION ALL} v\'ia \texttt{postgres\_fdw}};
 
 % ====================================================================
 % PIE / LEYENDA
@@ -469,7 +469,7 @@
 
 \node[anchor=west, text=gris, font=\sffamily\fontsize{9.4}{11.5}\selectfont]
   at (0.90,0.62) {%
-  \textbf{Nota acad\'emica:}\enspace la nube, el API Gateway y la comunicaci\'on REST se representan conceptualmente; en implementaci\'on, una \'unica instancia PostgreSQL a\'isla los 6 esquemas mediante roles RBAC y claves compartidas.};
+  \textbf{Nota arquitect\'onica:}\enspace cada dominio gestiona su propia base PostgreSQL (aislada por roles RBAC y sin FK entre servicios); la integraci\'on SQL ocurre v\'ia \texttt{postgres\_fdw} en \texttt{reportes} y por HTTP REST en \texttt{Backend/}.};
 
 \end{tikzpicture}
 \end{document}
