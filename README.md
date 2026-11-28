@@ -35,6 +35,7 @@ Makefile        Compila y publica todos los PDF en Documentos/
   cada carpeta contiene `01_tablas.sql` (con particionamiento `PARTITION BY LIST (id_sede)` en `inventarios` y `pedidos_venta`), `02_constraints.sql`, `03_datos.sql` y `04_seguridad.sql`.
 - `reportes/`: contiene `01_fdw_integracion.sql` (`postgres_fdw` solo lectura), `02_vistas.sql` (10 vistas obligatorias + 2 vistas `UNION ALL` de fragmentos = 12 vistas), `03_consultas_analiticas.sql` (20 consultas numeradas), `04_seguridad.sql`, `ejecutar_pruebas.sh` y `evidencias/`.
 - `local-db.sh`: gestiona una instancia PostgreSQL local en `.pgdata/` (puerto `5433`).
+- `neon-db.sh`: carga los scripts, configura `postgres_fdw` con TLS (`sslmode 'require'`), genera `Backend/.env` y ejecuta pruebas/consultas contra las 6 bases en Neon leyendo `claves_neon.txt`.
 
 ## Ejecución rápida en local
 

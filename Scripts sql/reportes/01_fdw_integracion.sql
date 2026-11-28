@@ -6,7 +6,8 @@
 -- Importa en modo lectura las tablas (y particiones por sede) de las cinco
 -- bases operacionales hacia esquemas homónimos dentro de la base `reportes`.
 -- Nota: en despliegue Neon, reemplaza host/port/credenciales en cada SERVER
---       y USER MAPPING por los parámetros de conexión de cada proyecto Neon.
+--       (agregando sslmode 'require') y omite password_required 'false' en
+--       USER MAPPING, o utiliza el script automatizado ../neon-db.sh.
 -- ============================================================================
 
 CREATE EXTENSION IF NOT EXISTS postgres_fdw;
@@ -58,7 +59,8 @@ END $$;
 -- usr_reportes_gerencia, usr_reportes_auditor, usr_reportes_lector y usr_reportes_app).
 -- Al usar exclusivamente los usuarios lectores/auditores remotos, PostgreSQL impide
 -- cualquier escritura (INSERT/UPDATE/DELETE) desde `reportes` hacia los demás servicios.
--- En despliegue Neon (con auth scram-sha-256), puede omitirse password_required 'false'.
+-- En despliegue Neon (auth scram-sha-256 y rol neondb_owner sin superusuario),
+-- debe omitirse password_required 'false' y agregar sslmode 'require' al SERVER.
 CREATE USER MAPPING FOR PUBLIC SERVER srv_catalogo
     OPTIONS (user 'usr_catalogo_lector', password 'Catalogo#Lector_2026', password_required 'false');
 CREATE USER MAPPING FOR PUBLIC SERVER srv_compras

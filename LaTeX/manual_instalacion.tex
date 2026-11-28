@@ -130,7 +130,11 @@ done
         \texttt{reportes/01\_fdw\_integracion.sql}, sustituya \texttt{host},
         \texttt{port} (\texttt{5432}), \texttt{dbname} y credenciales de
         \texttt{CREATE SERVER} / \texttt{USER MAPPING} por los de Neon con
-        \texttt{sslmode=require}.
+        \texttt{sslmode 'require'} (y omita \texttt{password\_required 'false'},
+        ya que \texttt{neondb\_owner} no es superusuario). Como alternativa
+        automatizada, puede usar \texttt{Scripts sql/neon-db.sh} leyendo
+        \texttt{claves\_neon.txt} (\texttt{init}, \texttt{pruebas},
+        \texttt{consultas}, \texttt{env}, \texttt{status}).
   \item \textbf{Microservicios en Render:} el archivo \texttt{render.yaml} en
         la ra\'iz define los 6 servicios web (\textit{New $\to$ Blueprint}) y
         solicita \texttt{DB\_URL}, \texttt{DB\_USER} y \texttt{DB\_PASSWORD} de

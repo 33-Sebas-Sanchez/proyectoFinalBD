@@ -20,5 +20,7 @@ LaTeX/*.pdf
 
 # Sistema y entorno local
 .pgdata/
+.env
+claves_neon.txt
 .DS_Store
 Thumbs.db
